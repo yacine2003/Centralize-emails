@@ -13,11 +13,16 @@ const EmailItem = ({ email, onClick }) => {
     });
   };
 
+  const getCategoryClass = (category) => {
+    return `email-item email-category-${category}`;
+  };
+
   return (
-    <div className="email-item" onClick={onClick}>
+    <div className={getCategoryClass(email.category)} onClick={onClick}>
       <div className="email-header">
         <div className="email-subject">
-          <span className="email-icon">📨</span>
+          <span className="email-icon">{email.categoryIcon || '📨'}</span>
+          <span className="category-badge">{email.categoryLabel}</span>
           {email.subject}
         </div>
         <div className="email-date">
@@ -38,13 +43,15 @@ const EmailItem = ({ email, onClick }) => {
         {email.snippet}
       </div>
       
-      {email.leboncoinUrl && (
+      {email.category === 'message' ? (
+        <div className="email-link">
+          💬 Cliquez pour ouvrir vos messages Leboncoin
+        </div>
+      ) : email.leboncoinUrl ? (
         <div className="email-link">
           🔗 Lien Leboncoin disponible - Cliquez pour ouvrir
         </div>
-      )}
-      
-      {!email.leboncoinUrl && (
+      ) : (
         <div className="email-no-link">
           ⚠️ Aucun lien Leboncoin trouvé
         </div>

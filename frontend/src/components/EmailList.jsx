@@ -9,6 +9,7 @@ const EmailList = () => {
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
 
   const fetchEmails = useCallback(async () => {
     setLoading(true);
@@ -47,14 +48,26 @@ const EmailList = () => {
   }, [fetchEmails]);
 
   const handleOpenEmail = async (email) => {
-    if (!email.leboncoinUrl) {
-      alert('Aucun lien Leboncoin trouvé dans cet email');
-      return;
-    }
-
     if (!email.lbcPassword) {
       alert('Mot de passe Leboncoin non configuré pour ce compte dans le Google Sheet');
       return;
+    }
+
+    // Déterminer l'URL à ouvrir selon la catégorie
+    let targetUrl;
+    
+    if (email.category === 'message') {
+      // Pour les messages, ouvrir la page des messages
+      targetUrl = 'https://www.leboncoin.fr/messages';
+      console.log('📬 Ouverture de la page des messages');
+    } else {
+      // Pour les autres catégories, ouvrir le lien spécifique
+      if (!email.leboncoinUrl) {
+        alert('Aucun lien Leboncoin trouvé dans cet email');
+        return;
+      }
+      targetUrl = email.leboncoinUrl;
+      console.log('🔗 Ouverture du lien spécifique');
     }
 
     try {
@@ -62,10 +75,11 @@ const EmailList = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          url: email.leboncoinUrl,
+          url: targetUrl,
           email: email.accountEmail,
           password: email.lbcPassword,
-          accountId: email.accountId
+          accountId: email.accountId,
+          category: email.category
         })
       });
 
@@ -74,7 +88,7 @@ const EmailList = () => {
       if (data.error) {
         alert(`Erreur: ${data.error}`);
       } else {
-        console.log('✅ Lien ouvert avec succès');
+        console.log(`✅ Page ouverte: ${data.url}`);
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -116,9 +130,44 @@ const EmailList = () => {
 
       <div className="stats">
         {emails.length > 0 && (
-          <div className="emails-count">
-            📊 {emails.length} email(s) trouvé(s)
-          </div>
+          <>
+            <div className="emails-count">
+              📊 {emails.filter(e => filterCategory === 'all' || e.category === filterCategory).length} email(s) affiché(s) sur {emails.length}
+            </div>
+            
+            <div className="filter-buttons">
+              <button 
+                className={`filter-btn ${filterCategory === 'all' ? 'active' : ''}`}
+                onClick={() => setFilterCategory('all')}
+              >
+                📧 Tous
+              </button>
+              <button 
+                className={`filter-btn ${filterCategory === 'message' ? 'active' : ''}`}
+                onClick={() => setFilterCategory('message')}
+              >
+                💬 Messages
+              </button>
+              <button 
+                className={`filter-btn ${filterCategory === 'published' ? 'active' : ''}`}
+                onClick={() => setFilterCategory('published')}
+              >
+                ✅ Publiées
+              </button>
+              <button 
+                className={`filter-btn ${filterCategory === 'deleted' ? 'active' : ''}`}
+                onClick={() => setFilterCategory('deleted')}
+              >
+                🗑️ Supprimées
+              </button>
+              <button 
+                className={`filter-btn ${filterCategory === 'rejected' ? 'active' : ''}`}
+                onClick={() => setFilterCategory('rejected')}
+              >
+                ❌ Refusées
+              </button>
+            </div>
+          </>
         )}
       </div>
 
@@ -131,13 +180,15 @@ const EmailList = () => {
           </div>
         )}
         
-        {emails.map((email) => (
-          <EmailItem
-            key={email.id}
-            email={email}
-            onClick={() => handleOpenEmail(email)}
-          />
-        ))}
+        {emails
+          .filter(email => filterCategory === 'all' || email.category === filterCategory)
+          .map((email) => (
+            <EmailItem
+              key={email.id}
+              email={email}
+              onClick={() => handleOpenEmail(email)}
+            />
+          ))}
       </div>
     </div>
   );

@@ -107,16 +107,20 @@ class ImapService {
 
   parseEmail(parsed, account) {
     const body = parsed.html || parsed.text || '';
+    const subject = parsed.subject || 'Sans sujet';
     
     // Extraire le lien Leboncoin
     const leboncoinUrl = this.extractLeboncoinUrl(body);
     
     // Extraire l'ID du compte si possible
-    const accountId = this.extractAccountId(body, parsed.subject);
+    const accountId = this.extractAccountId(body, subject);
+    
+    // Catégoriser l'email
+    const category = this.categorizeEmail(subject, body);
 
     return {
       id: parsed.messageId || `${Date.now()}-${Math.random()}`,
-      subject: parsed.subject || 'Sans sujet',
+      subject: subject,
       from: parsed.from?.text || '',
       date: parsed.date || new Date(),
       body: body,
@@ -124,7 +128,99 @@ class ImapService {
       leboncoinUrl: leboncoinUrl,
       accountId: accountId,
       snippet: (parsed.text || '').substring(0, 200).replace(/\n/g, ' '),
-      lbcPassword: account.lbcPassword // Inclure le mot de passe LBC pour la connexion
+      lbcPassword: account.lbcPassword,
+      category: category.type,
+      categoryLabel: category.label,
+      categoryIcon: category.icon
+    };
+  }
+
+  categorizeEmail(subject, body) {
+    const subjectLower = subject.toLowerCase();
+    const bodyLower = body.toLowerCase();
+
+    // 1. Messages / Conversations
+    if (
+      subjectLower.includes('nouveau message') ||
+      subjectLower.includes('vous avez reçu un message') ||
+      subjectLower.includes('a répondu') ||
+      subjectLower.includes('message de') ||
+      bodyLower.includes('vous a envoyé un message') ||
+      bodyLower.includes('nouvelle conversation')
+    ) {
+      return {
+        type: 'message',
+        label: 'Message reçu',
+        icon: '💬'
+      };
+    }
+
+    // 2. Mise en ligne d'annonce
+    if (
+      subjectLower.includes('votre annonce est en ligne') ||
+      subjectLower.includes('annonce publiée') ||
+      subjectLower.includes('annonce validée') ||
+      subjectLower.includes('mise en ligne') ||
+      bodyLower.includes('votre annonce est maintenant visible') ||
+      bodyLower.includes('annonce a été publiée')
+    ) {
+      return {
+        type: 'published',
+        label: 'Annonce publiée',
+        icon: '✅'
+      };
+    }
+
+    // 3. Suppression d'annonce
+    if (
+      subjectLower.includes('annonce supprimée') ||
+      subjectLower.includes('suppression de votre annonce') ||
+      subjectLower.includes('annonce retirée') ||
+      bodyLower.includes('votre annonce a été supprimée') ||
+      bodyLower.includes('annonce a été retirée')
+    ) {
+      return {
+        type: 'deleted',
+        label: 'Annonce supprimée',
+        icon: '🗑️'
+      };
+    }
+
+    // 4. Annonce refusée / Modération
+    if (
+      subjectLower.includes('annonce refusée') ||
+      subjectLower.includes('annonce non conforme') ||
+      subjectLower.includes('annonce rejetée') ||
+      subjectLower.includes('modération') ||
+      subjectLower.includes('non validée') ||
+      bodyLower.includes('votre annonce a été refusée') ||
+      bodyLower.includes('ne peut pas être publiée') ||
+      bodyLower.includes('non conforme')
+    ) {
+      return {
+        type: 'rejected',
+        label: 'Annonce refusée',
+        icon: '❌'
+      };
+    }
+
+    // 5. Autres types possibles
+    if (
+      subjectLower.includes('expir') ||
+      bodyLower.includes('va expirer')
+    ) {
+      return {
+        type: 'expiring',
+        label: 'Annonce expire bientôt',
+        icon: '⏰'
+      };
+    }
+
+    // Type par défaut
+    return {
+      type: 'other',
+      label: 'Autre',
+      icon: '📧'
     };
   }
 

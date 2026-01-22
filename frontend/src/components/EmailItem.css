@@ -13,6 +13,36 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
+/* Couleurs par catégorie */
+.email-category-message {
+  border-left-color: #4CAF50;
+  background: linear-gradient(to right, rgba(76, 175, 80, 0.05), white);
+}
+
+.email-category-published {
+  border-left-color: #2196F3;
+  background: linear-gradient(to right, rgba(33, 150, 243, 0.05), white);
+}
+
+.email-category-deleted {
+  border-left-color: #FF9800;
+  background: linear-gradient(to right, rgba(255, 152, 0, 0.05), white);
+}
+
+.email-category-rejected {
+  border-left-color: #F44336;
+  background: linear-gradient(to right, rgba(244, 67, 54, 0.05), white);
+}
+
+.email-category-expiring {
+  border-left-color: #FFC107;
+  background: linear-gradient(to right, rgba(255, 193, 7, 0.05), white);
+}
+
+.email-category-other {
+  border-left-color: #9E9E9E;
+}
+
 .email-header {
   display: flex;
   justify-content: space-between;
@@ -29,6 +59,47 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.email-category-message .category-badge {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.email-category-published .category-badge {
+  background: #E3F2FD;
+  color: #1565C0;
+}
+
+.email-category-deleted .category-badge {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.email-category-rejected .category-badge {
+  background: #FFEBEE;
+  color: #C62828;
+}
+
+.email-category-expiring .category-badge {
+  background: #FFF9C4;
+  color: #F57F17;
+}
+
+.email-category-other .category-badge {
+  background: #F5F5F5;
+  color: #616161;
 }
 
 .email-icon {

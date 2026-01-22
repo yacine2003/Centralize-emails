@@ -476,6 +476,325 @@ class LeboncoinService {
   async detectAndLogin(page, email, password) {
     return await this.smartNavigationAndLogin(page, email, password);
   }
+      
+      const loginButtonInfo = await page.evaluate(() => {
+        // Chercher dans toute la partie haute de la page
+        const allElements = Array.from(document.querySelectorAll('a, button, [role="button"], div, span'));
+        
+        // Filtrer ceux qui contiennent "se connecter" ou "connexion"
+        const loginElements = allElements.filter(el => {
+          const text = el.textContent.toLowerCase().trim();
+          return text === 'se connecter' || 
+                 text === 'connexion' || 
+                 text.includes('me connecter') ||
+                 text === 'login';
+        });
+        
+        if (loginElements.length > 0) {
+          const firstElement = loginElements[0];
+          return {
+            found: true,
+            text: firstElement.textContent.trim(),
+            tagName: firstElement.tagName,
+            href: firstElement.href || firstElement.getAttribute('href'),
+            hasClick: typeof firstElement.click === 'function'
+          };
+        }
+        
+        return { found: false };
+      });
+
+      // Si on trouve un bouton "Se connecter", on clique dessus
+      if (loginButtonInfo.found) {
+        console.log(`✅ Bouton "${loginButtonInfo.text}" trouvé (${loginButtonInfo.tagName})`);
+        
+        // Délai avant de cliquer (comme si on lisait la page)
+        await this.mediumDelay();
+        
+        // Scroll léger pour simuler un mouvement naturel
+        await page.evaluate(() => {
+          window.scrollBy(0, Math.random() * 100 + 50);
+        });
+        
+        await this.shortDelay();
+        
+        console.log('🖱️  Tentative de clic sur "Se connecter"...');
+        
+        // Essayer plusieurs méthodes de clic
+        try {
+          // Méthode 1 : Clic JavaScript direct
+          const clicked = await page.evaluate(() => {
+            const allElements = Array.from(document.querySelectorAll('a, button, [role="button"], div, span'));
+            const loginElement = allElements.find(el => {
+              const text = el.textContent.toLowerCase().trim();
+              return text === 'se connecter' || 
+                     text === 'connexion' || 
+                     text.includes('me connecter') ||
+                     text === 'login';
+            });
+            
+            if (loginElement) {
+              loginElement.click();
+              return true;
+            }
+            return false;
+          });
+          
+          if (clicked) {
+            console.log('✅ Clic effectué via JavaScript');
+          } else {
+            console.log('⚠️  Élément "Se connecter" introuvable pour le clic');
+          }
+          
+          // Attendre la navigation vers la page de connexion
+          await page.waitForNavigation({ 
+            waitUntil: 'networkidle2', 
+            timeout: 15000 
+          }).catch(() => {
+            console.log('⚠️  Pas de navigation détectée après le clic');
+          });
+          
+          // Délai après la navigation (comme si on observait la nouvelle page)
+          await this.longDelay();
+          
+          console.log(`📍 URL après clic: ${page.url()}`);
+          
+          // Vérifier la présence d'un captcha après le clic sur "Se connecter"
+          captchaInfo = await this.detectCaptcha(page);
+          if (captchaInfo.detected) {
+            await this.waitForCaptchaResolution(page);
+          }
+          
+        } catch (error) {
+          console.log('⚠️  Erreur lors du clic:', error.message);
+        }
+      } else {
+        console.log('ℹ️  Aucun bouton "Se connecter" trouvé dans le header');
+      }
+      
+      // CAS 2 : Vérifier si on est maintenant sur la page de connexion
+      const isOnLoginPage = await page.evaluate(() => {
+        // Vérifier d'abord si le champ email est visible (plus fiable)
+        const emailInput = document.querySelector('input[type="email"], input[name="email"]');
+        
+        // Texte spécifique de la page de connexion
+        const hasLoginPageText = document.body.textContent.includes('Connectez-vous ou créez votre compte') ||
+                                 document.body.textContent.includes('E-mail');
+        
+        // Vérifier l'URL
+        const isLoginUrl = window.location.href.includes('/se-connecter') ||
+                          window.location.href.includes('/connexion') ||
+                          window.location.href.includes('/login');
+        
+        return {
+          isLoginPage: !!emailInput && (hasLoginPageText || isLoginUrl),
+          hasEmailField: !!emailInput
+        };
+      });
+
+      if (isOnLoginPage.isLoginPage && isOnLoginPage.hasEmailField) {
+        console.log('🔐 Page de connexion détectée, début de la connexion...');
+        
+        // Délai d'observation de la page
+        await this.mediumDelay();
+        
+        // Attendre le champ email avec un timeout plus long
+        try {
+          await page.waitForSelector('input[type="email"], input[name="email"]', { 
+            timeout: 15000 
+          });
+        } catch (error) {
+          console.log('⚠️  Champ email non trouvé, peut-être pas sur la bonne page');
+          // Prendre un screenshot pour debug
+          await page.screenshot({ path: '/tmp/debug-login-page.png' }).catch(() => {});
+          throw new Error('Champ email non trouvé - vérifiez que vous êtes bien sur la page de connexion');
+        }
+        
+        // Petit délai avant de cliquer sur le champ
+        await this.shortDelay();
+        
+        console.log('📝 Saisie de l\'email...');
+        
+        // Cliquer sur le champ email (comportement naturel)
+        await page.click('input[type="email"], input[name="email"]');
+        
+        // Petit délai après le clic
+        await this.randomDelay(300, 800);
+        
+        // Effacer le champ si nécessaire
+        await page.evaluate(() => {
+          const input = document.querySelector('input[type="email"], input[name="email"]');
+          if (input) input.value = '';
+        });
+        
+        // Délai avant de commencer à taper
+        await this.randomDelay(400, 900);
+        
+        // Taper l'email avec délai variable pour simuler la frappe humaine
+        await page.type('input[type="email"], input[name="email"]', email, { 
+          delay: Math.floor(Math.random() * 100) + 80 // 80-180ms par caractère
+        });
+        
+        // Délai après avoir tapé l'email (relecture)
+        await this.randomDelay(800, 1500);
+        
+        // Cliquer sur "Continuer"
+        console.log('🖱️  Clic sur "Continuer"...');
+        
+        // Attendre que le bouton soit visible et cliquable
+        await page.waitForSelector('button', { 
+          visible: true,
+          timeout: 10000 
+        });
+        
+        await this.shortDelay();
+        
+        // Cliquer sur le bouton (recherche plus flexible)
+        const continueClicked = await page.evaluate(() => {
+          // Chercher tous les boutons
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const continueButton = buttons.find(btn => {
+            const text = btn.textContent.toLowerCase().trim();
+            return text === 'continuer' || 
+                   text === 'continue' ||
+                   btn.type === 'submit';
+          });
+          
+          if (continueButton) {
+            continueButton.click();
+            return true;
+          }
+          return false;
+        });
+        
+        if (continueClicked) {
+          console.log('✅ Clic sur "Continuer" effectué');
+        } else {
+          console.log('⚠️  Bouton "Continuer" non trouvé, tentative avec sélecteur générique');
+          // Essayer de cliquer sur le premier bouton submit trouvé
+          await page.click('button[type="submit"]').catch(() => {
+            console.log('⚠️  Aucun bouton submit trouvé');
+          });
+        }
+        
+        // Délai pendant le chargement
+        await this.longDelay();
+        
+        // Vérifier la présence d'un captcha après "Continuer"
+        captchaInfo = await this.detectCaptcha(page);
+        if (captchaInfo.detected) {
+          await this.waitForCaptchaResolution(page);
+        }
+        
+        // Attendre le champ mot de passe
+        await page.waitForSelector('input[type="password"]', { 
+          timeout: 10000 
+        });
+        
+        // Observation de la nouvelle étape
+        await this.mediumDelay();
+        
+        console.log('📝 Saisie du mot de passe...');
+        
+        // Cliquer sur le champ mot de passe
+        await page.click('input[type="password"]');
+        
+        // Délai avant de taper
+        await this.randomDelay(400, 900);
+        
+        // Taper le mot de passe avec délai variable
+        await page.type('input[type="password"]', password, { 
+          delay: Math.floor(Math.random() * 100) + 80 // 80-180ms par caractère
+        });
+        
+        // Délai après avoir tapé le mot de passe (vérification)
+        await this.randomDelay(1000, 2000);
+        
+        // Cliquer sur le bouton de connexion
+        console.log('🖱️  Clic sur le bouton de connexion...');
+        
+        // Attendre que le bouton soit visible
+        await page.waitForSelector('button', { 
+          visible: true,
+          timeout: 10000 
+        });
+        
+        await this.shortDelay();
+        
+        // Cliquer sur le bouton de connexion (recherche flexible)
+        const loginClicked = await page.evaluate(() => {
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const loginButton = buttons.find(btn => {
+            const text = btn.textContent.toLowerCase().trim();
+            return text === 'se connecter' || 
+                   text === 'connexion' ||
+                   text === 'login' ||
+                   btn.type === 'submit';
+          });
+          
+          if (loginButton) {
+            loginButton.click();
+            return true;
+          }
+          return false;
+        });
+        
+        if (loginClicked) {
+          console.log('✅ Clic sur le bouton de connexion effectué');
+        } else {
+          console.log('⚠️  Tentative avec sélecteur submit');
+          await page.click('button[type="submit"]').catch(() => {
+            console.log('⚠️  Aucun bouton trouvé');
+          });
+        }
+        
+        console.log('⏳ En attente de la connexion...');
+        
+        // Vérifier la présence d'un captcha avant la navigation
+        captchaInfo = await this.detectCaptcha(page);
+        if (captchaInfo.detected) {
+          await this.waitForCaptchaResolution(page);
+        }
+        
+        // Attendre la navigation
+        await page.waitForNavigation({ 
+          waitUntil: 'networkidle2', 
+          timeout: 30000 
+        });
+
+        // Délai après connexion réussie
+        await this.longDelay();
+        
+        // Vérifier une dernière fois la présence d'un captcha après connexion
+        captchaInfo = await this.detectCaptcha(page);
+        if (captchaInfo.detected) {
+          await this.waitForCaptchaResolution(page);
+        }
+        
+        // Vérifier la popup de cookies après connexion (si elle n'a pas été détectée avant)
+        console.log('🍪 Vérification finale de la popup de cookies après connexion...');
+        await this.randomDelay(2000, 3000); // Attendre que la page se stabilise
+        
+        // Faire 2 tentatives de détection
+        console.log('🍪 Recherche de la popup (tentative 1/2)...');
+        await this.handleCookieConsent(page);
+        
+        await this.randomDelay(1500, 2500);
+        
+        console.log('🍪 Recherche de la popup (tentative 2/2)...');
+        await this.handleCookieConsent(page);
+        
+        console.log('✅ Connexion réussie');
+        return true;
+      } else {
+        console.log('✅ Déjà connecté');
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la connexion:', error.message);
+      throw error;
+    }
+  }
 
   async openEmailLink(url, email, password, accountId = null) {
     const browser = await this.initBrowser();
@@ -531,76 +850,30 @@ class LeboncoinService {
         // Observer la page après retour
         await this.mediumDelay();
         
-        // Vérifier la présence d'un captcha
+        // Vérifier une dernière fois la présence d'un captcha
         captchaInfo = await this.detectCaptcha(page);
         if (captchaInfo.detected) {
           await this.waitForCaptchaResolution(page);
         }
-        
-        // Vérifier la popup de cookies après le retour sur le lien
-        console.log('🍪 Vérification de la popup de cookies après retour...');
-        await this.randomDelay(2000, 3000);
-        
-        // Faire 3 tentatives de détection
-        for (let i = 1; i <= 3; i++) {
-          console.log(`🍪 Recherche de la popup (tentative ${i}/3)...`);
-          await this.handleCookieConsent(page);
-          if (i < 3) {
-            await this.randomDelay(1500, 2500);
-          }
-        }
       }
 
-      // ÉTAPE 4 : Vérification finale de la popup de cookies (même si pas de reconnexion)
-      console.log('🍪 Vérification finale de la popup de cookies...');
-      await this.randomDelay(1500, 2500);
-      
-      for (let i = 1; i <= 2; i++) {
-        console.log(`🍪 Recherche finale (tentative ${i}/2)...`);
-        await this.handleCookieConsent(page);
-        if (i < 2) {
-          await this.randomDelay(1500, 2500);
-        }
-      }
-
-      // ÉTAPE 5 : Si un accountId est fourni ET qu'on n'est pas déjà sur une page du compte
+      // ÉTAPE 4 : Si un accountId est fourni, naviguer vers ce compte
       if (accountId) {
-        const currentUrl = page.url();
-        const isAlreadyOnAccountPage = currentUrl.includes('/compte/') || 
-                                       currentUrl.includes('/messages') ||
-                                       currentUrl.includes('/mes-annonces');
+        console.log(`🔗 Navigation vers le compte ${accountId}...`);
         
-        if (!isAlreadyOnAccountPage) {
-          console.log(`🔗 Navigation vers le compte ${accountId}...`);
-          
-          // Délai avant navigation
-          await this.longDelay();
-          
-          const accountUrl = `https://www.leboncoin.fr/compte/${accountId}`;
-          await page.goto(accountUrl, { waitUntil: 'networkidle2' });
-          
-          // Observer le compte
-          await this.mediumDelay();
-          
-          // Vérifier la présence d'un captcha sur la page du compte
-          captchaInfo = await this.detectCaptcha(page);
-          if (captchaInfo.detected) {
-            await this.waitForCaptchaResolution(page);
-          }
-          
-          // Vérifier la popup de cookies sur la page du compte
-          console.log('🍪 Vérification de la popup sur la page du compte...');
-          await this.randomDelay(2000, 3000);
-          
-          for (let i = 1; i <= 2; i++) {
-            console.log(`🍪 Recherche sur compte (tentative ${i}/2)...`);
-            await this.handleCookieConsent(page);
-            if (i < 2) {
-              await this.randomDelay(1500, 2500);
-            }
-          }
-        } else {
-          console.log('ℹ️  Déjà sur une page du compte, pas de navigation nécessaire');
+        // Délai avant navigation
+        await this.longDelay();
+        
+        const accountUrl = `https://www.leboncoin.fr/compte/${accountId}`;
+        await page.goto(accountUrl, { waitUntil: 'networkidle2' });
+        
+        // Observer le compte
+        await this.mediumDelay();
+        
+        // Vérifier la présence d'un captcha sur la page du compte
+        captchaInfo = await this.detectCaptcha(page);
+        if (captchaInfo.detected) {
+          await this.waitForCaptchaResolution(page);
         }
       }
 
