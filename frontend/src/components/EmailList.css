@@ -1,0 +1,157 @@
+.email-list-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  color: white;
+}
+
+.header h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.config-section {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  margin-bottom: 30px;
+}
+
+.action-group {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.fetch-button {
+  padding: 15px 40px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  min-width: 250px;
+  justify-content: center;
+}
+
+.fetch-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.fetch-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border-left: 4px solid #c33;
+}
+
+.info-message {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border-left: 4px solid #1976d2;
+  margin-top: 10px;
+}
+
+.stats {
+  margin-bottom: 20px;
+}
+
+.emails-count {
+  background: white;
+  color: #667eea;
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 15px 25px;
+  border-radius: 10px;
+  display: inline-block;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.emails-list {
+  display: grid;
+  gap: 20px;
+}
+
+.empty-state {
+  background: white;
+  border-radius: 15px;
+  padding: 60px 40px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+}
+
+.empty-state p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .action-group {
+    flex-direction: column;
+  }
+
+  .config-section {
+    padding: 20px;
+  }
+
+  .fetch-button {
+    width: 100%;
+  }
+}
