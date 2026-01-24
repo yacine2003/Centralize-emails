@@ -10,6 +10,7 @@ const EmailList = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [filterEmail, setFilterEmail] = useState('all');
 
   const fetchEmails = useCallback(async () => {
     setLoading(true);
@@ -46,6 +47,9 @@ const EmailList = () => {
   useEffect(() => {
     fetchEmails();
   }, [fetchEmails]);
+
+  // Extraire les adresses emails uniques
+  const uniqueEmails = [...new Set(emails.map(e => e.accountEmail))].sort();
 
   const handleOpenEmail = async (email) => {
     if (!email.lbcPassword) {
@@ -85,14 +89,40 @@ const EmailList = () => {
 
       const data = await response.json();
       
-      if (data.error) {
-        alert(`Erreur: ${data.error}`);
+      if (!response.ok || data.error) {
+        // Afficher un message d'erreur plus clair selon le statut
+        let errorMessage = data.error || 'Erreur inconnue';
+        
+        if (response.status === 409) {
+          errorMessage += '\n\n💡 Conseil: Attendez quelques secondes et réessayez.';
+        } else if (response.status === 408) {
+          errorMessage += '\n\n💡 Conseil: Vérifiez votre connexion internet.';
+        } else if (response.status === 503) {
+          errorMessage += '\n\n💡 Le site Leboncoin peut être temporairement indisponible.';
+        } else if (response.status === 401) {
+          errorMessage += '\n\n💡 Vérifiez les identifiants dans le Google Sheet.';
+        }
+        
+        alert(`❌ ${errorMessage}`);
+        
+        // Afficher les détails techniques dans la console pour le debug
+        if (data.technicalDetails) {
+          console.error('Détails techniques:', data.technicalDetails);
+        }
       } else {
         console.log(`✅ Page ouverte: ${data.url}`);
+        // Optionnel: afficher une notification de succès discrète
       }
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors de l\'ouverture du lien');
+      
+      let errorMessage = 'Impossible de se connecter au serveur.';
+      
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage = 'Impossible de se connecter au serveur backend.\n\n💡 Vérifiez que le serveur est démarré (npm start dans le dossier backend).';
+      }
+      
+      alert(`❌ ${errorMessage}`);
     }
   };
 
@@ -132,40 +162,69 @@ const EmailList = () => {
         {emails.length > 0 && (
           <>
             <div className="emails-count">
-              📊 {emails.filter(e => filterCategory === 'all' || e.category === filterCategory).length} email(s) affiché(s) sur {emails.length}
+              📊 {emails.filter(e => 
+                (filterCategory === 'all' || e.category === filterCategory) &&
+                (filterEmail === 'all' || e.accountEmail === filterEmail)
+              ).length} email(s) affiché(s) sur {emails.length}
             </div>
             
-            <div className="filter-buttons">
-              <button 
-                className={`filter-btn ${filterCategory === 'all' ? 'active' : ''}`}
-                onClick={() => setFilterCategory('all')}
-              >
-                📧 Tous
-              </button>
-              <button 
-                className={`filter-btn ${filterCategory === 'message' ? 'active' : ''}`}
-                onClick={() => setFilterCategory('message')}
-              >
-                💬 Messages
-              </button>
-              <button 
-                className={`filter-btn ${filterCategory === 'published' ? 'active' : ''}`}
-                onClick={() => setFilterCategory('published')}
-              >
-                ✅ Publiées
-              </button>
-              <button 
-                className={`filter-btn ${filterCategory === 'deleted' ? 'active' : ''}`}
-                onClick={() => setFilterCategory('deleted')}
-              >
-                🗑️ Supprimées
-              </button>
-              <button 
-                className={`filter-btn ${filterCategory === 'rejected' ? 'active' : ''}`}
-                onClick={() => setFilterCategory('rejected')}
-              >
-                ❌ Refusées
-              </button>
+            <div className="filter-section">
+              <div className="filter-group">
+                <div className="filter-label">📂 Par catégorie :</div>
+                <div className="filter-buttons">
+                  <button 
+                    className={`filter-btn ${filterCategory === 'all' ? 'active' : ''}`}
+                    onClick={() => setFilterCategory('all')}
+                  >
+                    📧 Tous
+                  </button>
+                  <button 
+                    className={`filter-btn ${filterCategory === 'message' ? 'active' : ''}`}
+                    onClick={() => setFilterCategory('message')}
+                  >
+                    💬 Messages
+                  </button>
+                  <button 
+                    className={`filter-btn ${filterCategory === 'published' ? 'active' : ''}`}
+                    onClick={() => setFilterCategory('published')}
+                  >
+                    ✅ Publiées
+                  </button>
+                  <button 
+                    className={`filter-btn ${filterCategory === 'deleted' ? 'active' : ''}`}
+                    onClick={() => setFilterCategory('deleted')}
+                  >
+                    🗑️ Supprimées
+                  </button>
+                  <button 
+                    className={`filter-btn ${filterCategory === 'rejected' ? 'active' : ''}`}
+                    onClick={() => setFilterCategory('rejected')}
+                  >
+                    ❌ Refusées
+                  </button>
+                </div>
+              </div>
+
+              <div className="filter-group">
+                <div className="filter-label">👤 Par compte :</div>
+                <div className="filter-buttons">
+                  <button 
+                    className={`filter-btn ${filterEmail === 'all' ? 'active' : ''}`}
+                    onClick={() => setFilterEmail('all')}
+                  >
+                    📧 Tous les comptes
+                  </button>
+                  {uniqueEmails.map(email => (
+                    <button 
+                      key={email}
+                      className={`filter-btn ${filterEmail === email ? 'active' : ''}`}
+                      onClick={() => setFilterEmail(email)}
+                    >
+                      ✉️ {email}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </>
         )}
@@ -181,7 +240,10 @@ const EmailList = () => {
         )}
         
         {emails
-          .filter(email => filterCategory === 'all' || email.category === filterCategory)
+          .filter(email => 
+            (filterCategory === 'all' || email.category === filterCategory) &&
+            (filterEmail === 'all' || email.accountEmail === filterEmail)
+          )
           .map((email) => (
             <EmailItem
               key={email.id}

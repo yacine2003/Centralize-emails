@@ -139,6 +139,8 @@ class ImapService {
     const subjectLower = subject.toLowerCase();
     const bodyLower = body.toLowerCase();
 
+    console.log(`🏷️  Catégorisation: "${subject.substring(0, 60)}..."`);
+
     // 1. Messages / Conversations
     if (
       subjectLower.includes('nouveau message') ||
@@ -148,27 +150,38 @@ class ImapService {
       bodyLower.includes('vous a envoyé un message') ||
       bodyLower.includes('nouvelle conversation')
     ) {
-      return {
+      const result = {
         type: 'message',
         label: 'Message reçu',
         icon: '💬'
       };
+      console.log(`   ➜ Catégorie: ${result.type} (${result.label})`);
+      return result;
     }
 
     // 2. Mise en ligne d'annonce
     if (
-      subjectLower.includes('votre annonce est en ligne') ||
+      subjectLower.includes('annonce est en ligne') ||
+      subjectLower.includes('annonce « ') && subjectLower.includes(' » est en ligne') ||
+      subjectLower.includes('annonce "') && subjectLower.includes('" est en ligne') ||
+      subjectLower.includes('annonce \'') && subjectLower.includes('\' est en ligne') ||
       subjectLower.includes('annonce publiée') ||
       subjectLower.includes('annonce validée') ||
       subjectLower.includes('mise en ligne') ||
+      subjectLower.includes('est maintenant en ligne') ||
       bodyLower.includes('votre annonce est maintenant visible') ||
-      bodyLower.includes('annonce a été publiée')
+      bodyLower.includes('votre annonce est en ligne') ||
+      bodyLower.includes('annonce a été publiée') ||
+      bodyLower.includes('annonce vient d\'être validée') ||
+      bodyLower.includes('validée pour être mise en ligne')
     ) {
-      return {
+      const result = {
         type: 'published',
         label: 'Annonce publiée',
         icon: '✅'
       };
+      console.log(`   ➜ Catégorie: ${result.type} (${result.label})`);
+      return result;
     }
 
     // 3. Suppression d'annonce
@@ -179,11 +192,13 @@ class ImapService {
       bodyLower.includes('votre annonce a été supprimée') ||
       bodyLower.includes('annonce a été retirée')
     ) {
-      return {
+      const result = {
         type: 'deleted',
         label: 'Annonce supprimée',
         icon: '🗑️'
       };
+      console.log(`   ➜ Catégorie: ${result.type} (${result.label})`);
+      return result;
     }
 
     // 4. Annonce refusée / Modération
@@ -197,11 +212,13 @@ class ImapService {
       bodyLower.includes('ne peut pas être publiée') ||
       bodyLower.includes('non conforme')
     ) {
-      return {
+      const result = {
         type: 'rejected',
         label: 'Annonce refusée',
         icon: '❌'
       };
+      console.log(`   ➜ Catégorie: ${result.type} (${result.label})`);
+      return result;
     }
 
     // 5. Autres types possibles
@@ -209,19 +226,24 @@ class ImapService {
       subjectLower.includes('expir') ||
       bodyLower.includes('va expirer')
     ) {
-      return {
+      const result = {
         type: 'expiring',
         label: 'Annonce expire bientôt',
         icon: '⏰'
       };
+      console.log(`   ➜ Catégorie: ${result.type} (${result.label})`);
+      return result;
     }
 
     // Type par défaut
-    return {
+    const result = {
       type: 'other',
       label: 'Autre',
       icon: '📧'
     };
+    
+    console.log(`   ➜ Catégorie: ${result.type} (${result.label})`);
+    return result;
   }
 
   extractLeboncoinUrl(body) {
