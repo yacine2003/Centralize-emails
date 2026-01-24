@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const emailRoutes = require('./routes/emails');
 
 const app = express();
@@ -9,6 +10,9 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Servir les fichiers statiques du frontend (dossier public)
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Logger middleware
 app.use((req, res, next) => {
@@ -19,16 +23,26 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api', emailRoutes);
 
-// Route racine
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'API Centralize-Emails',
-    version: '1.0.0',
-    endpoints: {
-      health: 'GET /api/health',
-      emails: 'GET /api/emails/leboncoin?spreadsheetId=<ID>',
-      open: 'POST /api/emails/open',
-      closeBrowser: 'POST /api/browser/close'
+// Pour toute autre route, servir l'index.html du frontend (SPA support)
+app.get('*', (req, res) => {
+  // Si la requête commence par /api, on renvoie un 404 JSON
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ 
+      error: 'Endpoint API non trouvé',
+      path: req.path
+    });
+  }
+  
+  // Sinon on sert le frontend
+  const indexPath = path.join(__dirname, '../public', 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      // Si le frontend n'est pas encore buildé, on affiche un message d'aide
+      res.status(200).json({ 
+        message: 'API Centralize-Emails opérationnelle',
+        status: 'Frontend non détecté (Dossier backend/public manquant)',
+        help: 'Pour livrer le projet : 1. npm run build dans frontend, 2. copiez le contenu de frontend/build dans backend/public'
+      });
     }
   });
 });

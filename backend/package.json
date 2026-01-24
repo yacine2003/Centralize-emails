@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "Backend pour centraliser les emails Leboncoin depuis Google Sheets",
   "main": "src/server.js",
+  "bin": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "build": "pkg . --targets node18-win-x64 --output dist/LBC-Automation.exe"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -19,5 +21,16 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "pkg": {
+    "assets": [
+      "public/**/*",
+      "src/**/*",
+      ".env"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "dist"
   }
 }

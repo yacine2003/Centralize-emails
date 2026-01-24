@@ -1,0 +1,174 @@
+═══════════════════════════════════════════════════════════
+    LBC AUTOMATION - GUIDE D'UTILISATION CLIENT
+═══════════════════════════════════════════════════════════
+
+Bienvenue ! Cette application vous permet de centraliser et gérer
+vos emails Leboncoin depuis plusieurs comptes Gmail.
+
+───────────────────────────────────────────────────────────
+📋 CONTENU DU DOSSIER
+───────────────────────────────────────────────────────────
+
+✓ LBC-Automation.exe          → L'application principale
+✓ service_account.json         → Fichier de configuration (NE PAS SUPPRIMER)
+✓ chrome-win/ (optionnel)      → Navigateur embarqué pour l'automation
+✓ INSTRUCTIONS_CLIENT.txt      → Ce fichier
+
+───────────────────────────────────────────────────────────
+⚙️ PRÉREQUIS AVANT LE PREMIER LANCEMENT
+───────────────────────────────────────────────────────────
+
+1. CONNEXION INTERNET
+   → Une connexion stable est nécessaire
+
+2. GOOGLE SHEET "LBC-Automation"
+   → Le Google Sheet doit être accessible et contenir vos identifiants
+   → Structure requise : ID | IMAP_Email | IMAP_Password | LBC_Password
+
+3. PARE-FEU WINDOWS
+   → Si Windows demande l'autorisation, ACCEPTER pour le réseau privé
+
+───────────────────────────────────────────────────────────
+🚀 LANCEMENT DE L'APPLICATION
+───────────────────────────────────────────────────────────
+
+1. Double-cliquez sur "LBC-Automation.exe"
+
+2. Patientez 5-10 secondes pendant le démarrage
+   → Une fenêtre noire (console) peut apparaître brièvement
+   → C'est normal, elle se fermera automatiquement
+
+3. Votre navigateur s'ouvrira automatiquement sur :
+   http://localhost:3001
+
+4. Si le navigateur ne s'ouvre pas automatiquement :
+   → Ouvrez manuellement votre navigateur
+   → Tapez dans la barre d'adresse : http://localhost:3001
+
+───────────────────────────────────────────────────────────
+📧 UTILISATION DE L'APPLICATION
+───────────────────────────────────────────────────────────
+
+ÉTAPE 1 : RÉCUPÉRER LES EMAILS
+-------------------------------
+→ Cliquez sur le bouton "🔄 Rafraîchir les emails"
+→ Patientez quelques secondes
+→ Vos emails Leboncoin s'affichent automatiquement
+
+ÉTAPE 2 : FILTRER LES EMAILS
+-----------------------------
+→ Utilisez les boutons de filtre :
+   • Par catégorie : Messages / Publiées / Supprimées / Refusées
+   • Par compte : Sélectionnez un compte Gmail spécifique
+
+ÉTAPE 3 : OUVRIR UN EMAIL
+--------------------------
+→ Cliquez sur n'importe quel email dans la liste
+→ Un nouveau navigateur s'ouvre automatiquement
+→ Pour les MESSAGES : connexion automatique à votre compte
+→ Pour les ANNONCES : ouverture directe du lien
+
+───────────────────────────────────────────────────────────
+🔐 CONNEXION AUTOMATIQUE (MESSAGES)
+───────────────────────────────────────────────────────────
+
+Lorsque vous cliquez sur un MESSAGE :
+
+1. Le navigateur s'ouvre
+2. La connexion se fait AUTOMATIQUEMENT
+3. Si un CAPTCHA apparaît → RÉSOLVEZ-LE manuellement
+4. Le bot reprend ensuite automatiquement
+5. Vous êtes redirigé vers vos messages Leboncoin
+
+⚠️ IMPORTANT : Ne fermez pas le navigateur pendant la connexion !
+
+───────────────────────────────────────────────────────────
+🛑 ARRÊT DE L'APPLICATION
+───────────────────────────────────────────────────────────
+
+MÉTHODE NORMALE :
+→ Fermez simplement l'onglet du navigateur (localhost:3001)
+→ L'application s'arrêtera automatiquement après quelques secondes
+
+MÉTHODE FORCÉE (si problème) :
+1. Ouvrez le Gestionnaire des tâches (Ctrl + Shift + Echap)
+2. Recherchez "LBC-Automation.exe"
+3. Clic droit → "Fin de tâche"
+
+───────────────────────────────────────────────────────────
+🆘 DÉPANNAGE
+───────────────────────────────────────────────────────────
+
+PROBLÈME 1 : L'application ne démarre pas
+------------------------------------------
+Cause possible : Antivirus bloque l'exécution
+Solution :
+→ Clic droit sur LBC-Automation.exe
+→ Propriétés → Débloquer
+→ OU : Ajouter une exception dans votre antivirus
+
+PROBLÈME 2 : Aucun email ne s'affiche
+--------------------------------------
+Cause possible : Google Sheet inaccessible
+Solution :
+→ Vérifiez que le Google Sheet "LBC-Automation" existe
+→ Vérifiez vos identifiants dans le Sheet
+→ Vérifiez votre connexion internet
+
+PROBLÈME 3 : Erreur "Port 3001 déjà utilisé"
+---------------------------------------------
+Cause : Une autre instance est déjà lancée
+Solution :
+→ Fermez toutes les fenêtres du navigateur sur localhost:3001
+→ Attendez 10 secondes
+→ Relancez l'application
+
+PROBLÈME 4 : La connexion automatique ne marche pas
+----------------------------------------------------
+Cause possible : Identifiants incorrects ou Leboncoin a changé
+Solution :
+→ Vérifiez vos identifiants dans le Google Sheet
+→ Essayez de vous connecter manuellement sur leboncoin.fr
+→ Si le problème persiste, contactez le support
+
+PROBLÈME 5 : Le navigateur ne trouve pas Chrome
+------------------------------------------------
+Cause : Chromium n'est pas installé/trouvé
+Solution :
+→ Vérifiez que le dossier "chrome-win" est présent
+→ OU : Installez Google Chrome sur votre PC
+
+───────────────────────────────────────────────────────────
+💡 CONSEILS D'UTILISATION
+───────────────────────────────────────────────────────────
+
+✓ Lancez l'application UNE SEULE FOIS (évitez les doublons)
+✓ Ne supprimez AUCUN fichier du dossier
+✓ Gardez le fichier service_account.json CONFIDENTIEL
+✓ Rafraîchissez régulièrement pour avoir les derniers emails
+✓ Si un CAPTCHA apparaît, prenez votre temps pour le résoudre
+
+───────────────────────────────────────────────────────────
+🔒 SÉCURITÉ ET CONFIDENTIALITÉ
+───────────────────────────────────────────────────────────
+
+• Vos identifiants restent dans votre Google Sheet
+• Aucune donnée n'est envoyée à l'extérieur
+• L'application fonctionne 100% en local sur votre PC
+• Le navigateur utilisé est sécurisé et isolé
+
+───────────────────────────────────────────────────────────
+📞 SUPPORT
+───────────────────────────────────────────────────────────
+
+En cas de problème persistant ou de question :
+→ Contactez votre administrateur système
+→ Décrivez précisément le problème rencontré
+→ Joignez une capture d'écran si possible
+
+═══════════════════════════════════════════════════════════
+
+Merci d'utiliser LBC Automation !
+Développé pour simplifier la gestion de vos emails Leboncoin.
+
+═══════════════════════════════════════════════════════════

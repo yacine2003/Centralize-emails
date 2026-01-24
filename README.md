@@ -188,6 +188,39 @@ Ferme le navigateur Puppeteer.
 - Les mots de passe Leboncoin sont stockés dans le Google Sheet (à protéger)
 - Le navigateur Puppeteer s'ouvre en mode visible pour plus de sécurité
 
+## 📦 Build et Livraison (Windows .exe)
+
+Si vous souhaitez livrer ce projet en tant qu'application exécutable Windows (.exe), consultez le guide détaillé :
+
+**📚 [Guide de Build Complet](./BUILD.md)**
+
+### Préparation rapide (Mac/Linux)
+
+```bash
+# Exécuter le script automatisé
+./prepare-build.sh
+```
+
+### Préparation rapide (Windows)
+
+```batch
+REM Exécuter le script automatisé
+prepare-build.bat
+```
+
+Le script va :
+1. ✅ Builder le frontend React
+2. ✅ Copier le build dans `backend/public`
+3. ✅ Préparer le projet pour l'empaquetage
+
+Pour créer le `.exe` final, rendez-vous dans le dossier `backend` et exécutez :
+
+```bash
+npm run build
+```
+
+Le fichier `LBC-Automation.exe` sera créé dans `backend/dist/`.
+
 ## 🐛 Dépannage
 
 ### Erreur "spreadsheetId requis"
