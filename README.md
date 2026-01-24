@@ -188,38 +188,49 @@ Ferme le navigateur Puppeteer.
 - Les mots de passe Leboncoin sont stockés dans le Google Sheet (à protéger)
 - Le navigateur Puppeteer s'ouvre en mode visible pour plus de sécurité
 
-## 📦 Build et Livraison (Windows .exe)
+## 📦 Build et Livraison pour Windows
 
-Si vous souhaitez livrer ce projet en tant qu'application exécutable Windows (.exe), consultez le guide détaillé :
+### 🎯 Méthode Recommandée : Version Portable (Node.js Embarqué)
 
-**📚 [Guide de Build Complet](./BUILD.md)**
+**✅ Fiable à 100%** - **✅ Aucune installation** - **✅ Simple pour l'utilisateur**
 
-### Préparation rapide (Mac/Linux)
+Cette méthode crée un package avec Node.js inclus. L'utilisateur double-clique simplement sur un fichier `.bat` !
 
-```bash
-# Exécuter le script automatisé
-./prepare-build.sh
-```
+**📚 [Guide Complet - Version Portable](./BUILD_PORTABLE.md)**
 
-### Préparation rapide (Windows)
+**Préparation rapide (Windows) :**
 
-```batch
-REM Exécuter le script automatisé
-prepare-build.bat
-```
-
-Le script va :
-1. ✅ Builder le frontend React
-2. ✅ Copier le build dans `backend/public`
-3. ✅ Préparer le projet pour l'empaquetage
-
-Pour créer le `.exe` final, rendez-vous dans le dossier `backend` et exécutez :
-
-```bash
+```powershell
+# 1. Builder le frontend
+cd frontend
+npm install
 npm run build
+cd ..
+
+# 2. Copier vers backend
+mkdir backend\public
+xcopy /E /Y frontend\build\* backend\public\
+
+# 3. Créer le package portable
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\setup-portable.ps1
+
+# 4. Tester
+.\LBC-Automation.bat
 ```
 
-Le fichier `LBC-Automation.exe` sera créé dans `backend/dist/`.
+Le dossier `LBC-Automation/` est prêt à être compressé et livré !
+
+---
+
+### ⚠️ Alternative : Version .exe (Non Recommandée - Problèmes de Compatibilité)
+
+La création d'un `.exe` avec `pkg` pose des problèmes avec les bibliothèques Google modernes.  
+**Utilisez la version portable ci-dessus pour une fiabilité maximale.**
+
+Si vous souhaitez quand même essayer :
+
+**📚 [Guide Build .exe](./BUILD.md)** (peut ne pas fonctionner avec Google Sheets)
 
 ## 🐛 Dépannage
 

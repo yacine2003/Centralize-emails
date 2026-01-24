@@ -1,0 +1,125 @@
+═══════════════════════════════════════════════════════════
+    LBC AUTOMATION - GUIDE D'UTILISATION
+═══════════════════════════════════════════════════════════
+
+Bienvenue ! Cette application vous permet de centraliser vos
+emails Leboncoin depuis plusieurs comptes Gmail.
+
+───────────────────────────────────────────────────────────
+📋 CONTENU DU DOSSIER
+───────────────────────────────────────────────────────────
+
+✓ LBC-Automation.bat          → Fichier principal pour lancer
+✓ node-portable/               → Node.js embarque (ne pas toucher)
+✓ app/                         → Code de l'application (ne pas toucher)
+✓ INSTRUCTIONS_PORTABLE.txt    → Ce fichier
+
+───────────────────────────────────────────────────────────
+🚀 COMMENT LANCER L'APPLICATION ?
+───────────────────────────────────────────────────────────
+
+1. Double-cliquez sur "LBC-Automation.bat"
+
+2. Une fenetre noire (console) s'ouvre
+   → C'est normal, ne la fermez pas !
+
+3. Apres quelques secondes, votre navigateur s'ouvre
+   automatiquement sur http://localhost:3001
+
+4. Utilisez l'application normalement :
+   - Cliquez sur "Rafraichir les emails"
+   - Utilisez les filtres par categorie ou par compte
+   - Cliquez sur un email pour ouvrir Leboncoin
+
+───────────────────────────────────────────────────────────
+🛑 COMMENT ARRETER L'APPLICATION ?
+───────────────────────────────────────────────────────────
+
+METHODE 1 (Recommandee) :
+→ Fermez la fenetre noire (console)
+→ L'application s'arrete immediatement
+
+METHODE 2 :
+→ Dans la fenetre noire, appuyez sur Ctrl+C
+→ Confirmez avec "O" (Oui)
+
+───────────────────────────────────────────────────────────
+⚠️ IMPORTANT
+───────────────────────────────────────────────────────────
+
+• NE SUPPRIMEZ AUCUN FICHIER du dossier
+• NE DEPLACEZ PAS les fichiers
+• Gardez tous les dossiers ensemble (node-portable, app, etc.)
+• Si vous voulez "installer" ailleurs, deplacez LE DOSSIER COMPLET
+
+───────────────────────────────────────────────────────────
+🆘 DEPANNAGE
+───────────────────────────────────────────────────────────
+
+PROBLEME 1 : Rien ne se passe quand je double-clique
+------------------------------------------
+Solution :
+→ Clic droit sur LBC-Automation.bat
+→ "Executer en tant qu'administrateur"
+
+PROBLEME 2 : Erreur "Node.js portable non trouve"
+------------------------------------------
+Solution :
+→ Le dossier "node-portable" est manquant
+→ Verifiez que vous avez bien decompresse TOUT le .zip
+→ Retelecharger le package complet si necessaire
+
+PROBLEME 3 : Le navigateur ne s'ouvre pas
+------------------------------------------
+Solution :
+→ Ouvrez manuellement votre navigateur
+→ Allez sur : http://localhost:3001
+
+PROBLEME 4 : "Port 3001 deja utilise"
+------------------------------------------
+Solution :
+→ Une autre instance est deja lancee
+→ Fermez toutes les fenetres LBC Automation
+→ Attendez 10 secondes et relancez
+
+PROBLEME 5 : Aucun email ne s'affiche
+------------------------------------------
+Cause : Probleme avec le Google Sheet ou identifiants
+Solution :
+→ Verifiez votre connexion internet
+→ Verifiez que le Google Sheet "LBC-Automation" est accessible
+→ Verifiez les identifiants dans le Sheet
+
+───────────────────────────────────────────────────────────
+💡 CONSEILS D'UTILISATION
+───────────────────────────────────────────────────────────
+
+✓ Lancez l'application UNE SEULE FOIS (evitez les doublons)
+✓ Laissez la fenetre noire ouverte pendant l'utilisation
+✓ Vous pouvez reduire la fenetre noire (ne la fermez pas)
+✓ Rafraichissez regulierement pour avoir les derniers emails
+✓ Si un CAPTCHA apparait sur Leboncoin, prenez le temps de le resoudre
+
+───────────────────────────────────────────────────────────
+🔒 SECURITE
+───────────────────────────────────────────────────────────
+
+• Vos identifiants restent dans votre Google Sheet
+• Aucune donnee n'est envoyee a l'exterieur
+• L'application fonctionne 100% en local sur votre PC
+• Gardez le fichier service_account.json confidentiel
+
+───────────────────────────────────────────────────────────
+📞 SUPPORT
+───────────────────────────────────────────────────────────
+
+En cas de probleme persistant :
+→ Contactez votre administrateur
+→ Decrivez precisement le probleme rencontre
+→ Joignez une capture d'ecran si possible
+
+═══════════════════════════════════════════════════════════
+
+Merci d'utiliser LBC Automation !
+
+═══════════════════════════════════════════════════════════
