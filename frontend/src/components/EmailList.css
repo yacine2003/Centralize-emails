@@ -25,7 +25,7 @@
   background: white;
   border-radius: 15px;
   padding: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
   margin-bottom: 30px;
 }
 
@@ -40,7 +40,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #31b376 0%, #28a866 100%);
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -51,11 +51,12 @@
   white-space: nowrap;
   min-width: 250px;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(49, 179, 118, 0.3);
 }
 
 .fetch-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(49, 179, 118, 0.5);
 }
 
 .fetch-button:disabled {
@@ -99,21 +100,42 @@
 
 .emails-count {
   background: white;
-  color: #667eea;
-  font-weight: 600;
+  color: #31b376;
+  font-weight: 700;
   font-size: 1.1rem;
   padding: 15px 25px;
   border-radius: 10px;
   display: inline-block;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
   margin-bottom: 15px;
+}
+
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-label {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #31b376;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .filter-buttons {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 15px;
 }
 
 .filter-btn {
@@ -134,10 +156,10 @@
 }
 
 .filter-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #31b376 0%, #28a866 100%);
   color: white;
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  border-color: #31b376;
+  box-shadow: 0 4px 12px rgba(49, 179, 118, 0.4);
 }
 
 .emails-list {
@@ -150,7 +172,7 @@
   border-radius: 15px;
   padding: 60px 40px;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
 .empty-icon {
@@ -185,5 +207,18 @@
 
   .fetch-button {
     width: 100%;
+  }
+
+  .filter-section {
+    gap: 15px;
+  }
+
+  .filter-label {
+    font-size: 0.9rem;
+  }
+
+  .filter-btn {
+    font-size: 0.85rem;
+    padding: 8px 16px;
   }
 }

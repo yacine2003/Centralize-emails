@@ -5,6 +5,20 @@ class LeboncoinService {
     this.browser = null;
   }
 
+  // Vérifier si la page est encore attachée et utilisable
+  async isPageValid(page) {
+    try {
+      if (!page || page.isClosed()) {
+        return false;
+      }
+      // Essayer d'obtenir l'URL pour vérifier que la page est accessible
+      await page.url();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   // Délai aléatoire pour simuler un comportement humain
   async randomDelay(min = 1000, max = 3000) {
     const delay = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -477,26 +491,58 @@ class LeboncoinService {
     return await this.smartNavigationAndLogin(page, email, password);
   }
 
-  async openEmailLink(url, email, password, accountId = null) {
-    const browser = await this.initBrowser();
-    const page = await browser.newPage();
+  async openEmailLink(url, email, password, accountId = null, category = null) {
+    let page;
     
     try {
+      console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`🔗 OUVERTURE D'UN EMAIL LEBONCOIN`);
+      console.log(`📧 Email: ${email}`);
+      console.log(`🔗 URL: ${url}`);
+      console.log(`📂 Catégorie: ${category || 'non spécifiée'}`);
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+      
+      const browser = await this.initBrowser();
+      page = await browser.newPage();
+      
+      // Déterminer si on doit se connecter automatiquement
+      const shouldAutoLogin = category === 'message'; // Seulement pour les messages
+      const skipLogin = ['published', 'deleted', 'rejected'].includes(category);
+      
       console.log(`🔗 Ouverture du lien de l'email: ${url}`);
+      if (skipLogin) {
+        console.log(`ℹ️  Catégorie "${category}": ouverture sans connexion automatique`);
+      }
       
       // Délai initial avant d'ouvrir le lien
       await this.shortDelay();
       
       // ÉTAPE 1 : Aller sur le lien de l'email
-      await page.goto(url, {
-        waitUntil: 'networkidle2',
-        timeout: 30000
-      });
-
-      console.log(`📍 Page chargée: ${page.url()}`);
+      try {
+        await page.goto(url, {
+          waitUntil: 'networkidle2',
+          timeout: 30000
+        });
+        console.log(`📍 Page chargée: ${page.url()}`);
+      } catch (gotoError) {
+        if (gotoError.message.includes('timeout')) {
+          console.warn('⚠️  Timeout lors du chargement initial, tentative avec waitUntil: load');
+          await page.goto(url, {
+            waitUntil: 'load',
+            timeout: 30000
+          });
+        } else {
+          throw gotoError;
+        }
+      }
       
       // Délai d'observation de la page
       await this.mediumDelay();
+      
+      // Vérifier que la page est toujours valide
+      if (!(await this.isPageValid(page))) {
+        throw new Error('La page a été fermée après le chargement initial');
+      }
       
       // ÉTAPE 1.5 : Vérifier la présence d'un captcha après le chargement
       let captchaInfo = await this.detectCaptcha(page);
@@ -513,8 +559,30 @@ class LeboncoinService {
         await this.waitForCaptchaResolution(page);
       }
       
-      // ÉTAPE 3 : Détecter si connexion nécessaire et se connecter
-      const wasLoggedIn = await this.detectAndLogin(page, email, password);
+      // ÉTAPE 3 : Détecter si connexion nécessaire et se connecter (seulement pour les messages)
+      let wasLoggedIn = false;
+      
+      if (shouldAutoLogin) {
+        console.log(`🔐 Connexion automatique activée pour la catégorie "message"`);
+        
+        // Vérifier que la page est toujours valide avant de tenter la connexion
+        if (!(await this.isPageValid(page))) {
+          throw new Error('La page a été fermée avant la tentative de connexion');
+        }
+        
+        wasLoggedIn = await this.detectAndLogin(page, email, password);
+      } else if (skipLogin) {
+        console.log(`✅ Page ouverte sans connexion automatique`);
+        // Pour ces catégories, on s'arrête ici
+        return {
+          success: true,
+          url: page.url(),
+          category: category
+        };
+      } else {
+        // Pour les autres catégories (ou si pas de catégorie), comportement par défaut
+        wasLoggedIn = await this.detectAndLogin(page, email, password);
+      }
       
       if (wasLoggedIn) {
         // Si on s'est connecté, retourner sur le lien de l'email
@@ -523,10 +591,25 @@ class LeboncoinService {
         // Délai avant de retourner sur le lien
         await this.longDelay();
         
-        await page.goto(url, {
-          waitUntil: 'networkidle2',
-          timeout: 30000
-        });
+        try {
+          await page.goto(url, {
+            waitUntil: 'networkidle2',
+            timeout: 30000
+          });
+        } catch (gotoError) {
+          if (gotoError.message.includes('timeout')) {
+            console.warn('⚠️  Timeout lors du retour, tentative avec waitUntil: load');
+            await page.goto(url, {
+              waitUntil: 'load',
+              timeout: 30000
+            });
+          } else if (gotoError.message.includes('detached Frame')) {
+            console.error('❌ La page a été fermée. Abandon de l\'opération.');
+            throw new Error('La page a été fermée pendant la navigation. Veuillez réessayer.');
+          } else {
+            throw gotoError;
+          }
+        }
         
         // Observer la page après retour
         await this.mediumDelay();
@@ -577,7 +660,26 @@ class LeboncoinService {
           await this.longDelay();
           
           const accountUrl = `https://www.leboncoin.fr/compte/${accountId}`;
-          await page.goto(accountUrl, { waitUntil: 'networkidle2' });
+          
+          try {
+            await page.goto(accountUrl, { 
+              waitUntil: 'networkidle2',
+              timeout: 30000
+            });
+          } catch (gotoError) {
+            if (gotoError.message.includes('timeout')) {
+              console.warn('⚠️  Timeout lors de la navigation vers le compte, tentative avec waitUntil: load');
+              await page.goto(accountUrl, {
+                waitUntil: 'load',
+                timeout: 30000
+              });
+            } else if (gotoError.message.includes('detached Frame')) {
+              console.error('❌ La page a été fermée pendant la navigation vers le compte');
+              throw new Error('La page a été fermée. Veuillez réessayer.');
+            } else {
+              throw gotoError;
+            }
+          }
           
           // Observer le compte
           await this.mediumDelay();
@@ -605,12 +707,52 @@ class LeboncoinService {
       }
 
       console.log('✅ Navigation terminée avec succès');
-      console.log(`📍 URL finale: ${page.url()}`);
       
-      return { success: true, url: page.url() };
+      // Vérifier que la page est toujours attachée avant d'obtenir l'URL
+      let finalUrl;
+      try {
+        finalUrl = page.url();
+        console.log(`📍 URL finale: ${finalUrl}`);
+      } catch (err) {
+        console.warn('⚠️  Impossible d\'obtenir l\'URL finale (page peut-être détachée)');
+        finalUrl = url; // Utiliser l'URL d'origine
+      }
+      
+      return { success: true, url: finalUrl };
     } catch (error) {
-      console.error('❌ Erreur lors de l\'ouverture du lien:', error.message);
-      throw error;
+      console.error('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.error('❌ ERREUR LORS DE L\'OUVERTURE DU LIEN');
+      console.error(`📧 Email concerné: ${email}`);
+      console.error(`❌ Message d'erreur: ${error.message}`);
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      
+      // Essayer de fermer la page proprement en cas d'erreur
+      try {
+        if (page && !page.isClosed()) {
+          console.log('🧹 Nettoyage: fermeture de la page...');
+          await page.close();
+        }
+      } catch (closeErr) {
+        console.warn('⚠️  Impossible de fermer la page proprement');
+      }
+      
+      // Meilleure gestion des erreurs spécifiques
+      if (error.message.includes('detached Frame') || error.message.includes('Execution context was destroyed')) {
+        console.error('🔄 La page a été rechargée ou fermée pendant l\'opération');
+        console.error('💡 Conseil: Essayez de cliquer à nouveau sur le mail');
+        throw new Error('La page a été rechargée pendant l\'opération. Veuillez réessayer.');
+      } else if (error.message.includes('fermée')) {
+        throw new Error('La page a été fermée. Veuillez réessayer.');
+      } else if (error.message.includes('Navigation timeout') || error.message.includes('timeout')) {
+        console.error('⏱️  Timeout lors du chargement de la page');
+        throw new Error('La page a mis trop de temps à charger. Vérifiez votre connexion internet.');
+      } else if (error.message.includes('net::ERR_')) {
+        console.error('🌐 Erreur réseau');
+        throw new Error('Impossible de se connecter au site. Vérifiez votre connexion internet.');
+      } else {
+        // Pour toute autre erreur, la relayer telle quelle
+        throw error;
+      }
     }
   }
 
