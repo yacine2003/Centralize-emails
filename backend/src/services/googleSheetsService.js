@@ -1,6 +1,27 @@
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { JWT } = require('google-auth-library');
-const serviceAccount = require('../../service_account.json');
+const path = require('path');
+const fs = require('fs');
+
+// Chercher service_account.json de manière flexible
+let serviceAccount;
+const possiblePaths = [
+  path.join(__dirname, '../service_account.json'),        // Version portable : app/service_account.json
+  path.join(__dirname, '../../service_account.json'),     // Version dev : backend/service_account.json
+  path.join(process.cwd(), 'service_account.json'),       // Racine du projet
+];
+
+for (const filePath of possiblePaths) {
+  if (fs.existsSync(filePath)) {
+    serviceAccount = require(filePath);
+    console.log(`🔑 service_account.json trouvé: ${filePath}`);
+    break;
+  }
+}
+
+if (!serviceAccount) {
+  throw new Error('service_account.json non trouvé. Vérifiez que le fichier existe dans le dossier app/ ou backend/');
+}
 
 class GoogleSheetsService {
   constructor() {
