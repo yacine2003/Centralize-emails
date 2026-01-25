@@ -9,7 +9,7 @@
     "electron": "electron .",
     "electron-dev": "cross-env NODE_ENV=development electron .",
     "build": "electron-builder",
-    "build-win": "electron-builder --win",
+    "build-win": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win",
     "build-pkg": "npx pkg . --targets node18-win-x64 --output dist/LBC-Automation.exe"
   },
   "dependencies": {
@@ -57,7 +57,7 @@
     "win": {
       "target": [
         {
-          "target": "nsis",
+          "target": "portable",
           "arch": ["x64"]
         }
       ],
