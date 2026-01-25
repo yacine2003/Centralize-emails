@@ -162,89 +162,65 @@ function createWindow() {
   });
 }
 
-// Démarrer le serveur Express en arrière-plan
+// Démarrer le serveur Express directement dans le processus Electron
 function startServer() {
-  // Dans Electron packagé, __dirname pointe vers resources/app.asar ou resources/app
-  // Il faut utiliser app.getAppPath() pour obtenir le bon chemin
   const appPath = app.getAppPath();
-  // Utiliser le script wrapper qui sera extrait de asar
-  const serverPath = path.join(appPath, 'start-server.js');
+  const fs = require('fs');
   
   console.log('📁 Chemin de l\'application:', appPath);
-  console.log('📁 Chemin du serveur:', serverPath);
   console.log('📁 __dirname:', __dirname);
   
-  // Vérifier que le fichier existe
-  const fs = require('fs');
-  if (!fs.existsSync(serverPath)) {
-    console.error('❌ Fichier serveur non trouvé:', serverPath);
-    // Essayer avec __dirname
-    const altPath = path.join(__dirname, 'src', 'server.js');
-    console.log('🔄 Tentative avec chemin alternatif:', altPath);
-    if (fs.existsSync(altPath)) {
-      console.log('✅ Fichier trouvé avec chemin alternatif');
-    } else {
-      console.error('❌ Fichier non trouvé non plus avec chemin alternatif');
+  // Définir les variables d'environnement
+  process.env.PORT = '3001';
+  process.env.NODE_ENV = 'production';
+  
+  // Trouver le chemin du serveur
+  let serverModulePath;
+  const possiblePaths = [
+    path.join(appPath, 'src', 'server.js'),
+    path.join(__dirname, 'src', 'server.js'),
+    path.join(appPath, '..', 'src', 'server.js')
+  ];
+  
+  for (const testPath of possiblePaths) {
+    if (fs.existsSync(testPath)) {
+      serverModulePath = testPath;
+      console.log('✅ Fichier serveur trouvé:', serverModulePath);
+      break;
     }
   }
   
-  // Dans Electron packagé, utiliser ELECTRON_RUN_AS_NODE pour lancer Node.js
-  // Mais d'abord, vérifier si on est dans app.asar
-  const isAsar = appPath.includes('.asar');
-  console.log('📦 Application packagée (asar):', isAsar);
-  
-  // Utiliser Node.js embarqué d'Electron
-  const nodeEnv = {
-    ...process.env,
-    PORT: '3001',
-    NODE_ENV: 'production',
-    ELECTRON_RUN_AS_NODE: '1'
-  };
-  
-  // Si on est dans asar, les fichiers sont extraits dans app.asar.unpacked
-  let finalServerPath = serverPath;
-  if (isAsar) {
-    // Le fichier start-server.js sera dans app.asar.unpacked
-    const unpackedPath = serverPath.replace('.asar', '.asar.unpacked');
-    if (fs.existsSync(unpackedPath)) {
-      finalServerPath = unpackedPath;
-      console.log('✅ Utilisation du chemin unpacked:', finalServerPath);
-    } else if (fs.existsSync(serverPath)) {
-      // Essayer le chemin asar normal (peut fonctionner pour les fichiers extraits)
-      console.log('⚠️  Utilisation du chemin asar (fichier peut être accessible)');
-    } else {
-      console.error('❌ Fichier start-server.js non trouvé ni dans asar ni dans unpacked');
-      serverErrors.push(`Fichier start-server.js non trouvé. Chemins testés: ${serverPath}, ${unpackedPath}`);
-    }
-  }
-  
-  console.log('🚀 Lancement du serveur...');
-  console.log('📄 Fichier serveur:', finalServerPath);
-  console.log('📁 Répertoire de travail:', appPath);
-  
-  // Vérifier que le fichier existe avant de lancer
-  if (!fs.existsSync(finalServerPath)) {
-    const errorMsg = `Fichier serveur non trouvé: ${finalServerPath}`;
+  if (!serverModulePath) {
+    const errorMsg = 'Fichier serveur (src/server.js) non trouvé. Chemins testés: ' + possiblePaths.join(', ');
     console.error('❌', errorMsg);
     serverErrors.push(errorMsg);
     return;
   }
   
+  // Lancer le serveur directement dans le processus Electron
+  // Utiliser setImmediate pour ne pas bloquer le démarrage d'Electron
+  console.log('🚀 Lancement du serveur Express dans le processus Electron...');
+  
   try {
-    // Utiliser fork() - fonctionne mieux avec Electron que spawn()
-    // fork() crée un nouveau processus Node.js en utilisant le runtime d'Electron
-    serverProcess = fork(finalServerPath, [], {
-      cwd: appPath,
-      env: nodeEnv,
-      silent: false, // Afficher stdout et stderr dans la console
-      stdio: ['ignore', 'pipe', 'pipe', 'ipc'] // IPC pour la communication
-    });
+    // Changer le répertoire de travail si nécessaire
+    const originalCwd = process.cwd();
+    const serverDir = path.dirname(serverModulePath);
     
-    console.log('✅ Processus serveur créé avec PID:', serverProcess.pid);
+    // Require le serveur directement
+    // Le serveur va démarrer automatiquement car il a app.listen() à la fin
+    require(serverModulePath);
+    
+    serverReady = true;
+    console.log('✅ Serveur Express démarré avec succès dans le processus Electron');
+    
+    // Marquer qu'on a un "processus serveur" (même si c'est dans le même processus)
+    serverProcess = { pid: process.pid, kill: () => {} };
+    
   } catch (error) {
-    const errorMsg = `Erreur lors de la création du processus: ${error.message}`;
+    const errorMsg = `Erreur lors du démarrage du serveur: ${error.message}\n${error.stack}`;
     console.error('❌', errorMsg);
     serverErrors.push(errorMsg);
+    serverReady = false;
   }
 
   // Logger la sortie du serveur
@@ -313,11 +289,7 @@ app.whenReady().then(() => {
 
 // Fermer toutes les fenêtres quand l'app se ferme
 app.on('window-all-closed', () => {
-  // Arrêter le serveur
-  if (serverProcess) {
-    serverProcess.kill();
-  }
-  
+  // Le serveur tourne dans le même processus, il s'arrêtera avec l'app
   // Sur macOS, garder l'app active même si toutes les fenêtres sont fermées
   if (process.platform !== 'darwin') {
     app.quit();
@@ -326,9 +298,8 @@ app.on('window-all-closed', () => {
 
 // Arrêt propre
 app.on('before-quit', () => {
-  if (serverProcess) {
-    serverProcess.kill();
-  }
+  // Le serveur s'arrêtera automatiquement quand le processus se termine
+  console.log('🛑 Arrêt de l\'application...');
 });
 
 // Gestion des erreurs non capturées
