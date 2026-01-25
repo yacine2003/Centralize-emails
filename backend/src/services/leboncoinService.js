@@ -1,8 +1,29 @@
 const puppeteer = require('puppeteer');
+const { execSync } = require('child_process');
 
 class LeboncoinService {
   constructor() {
     this.browser = null;
+  }
+  
+  // Trouver Chrome via la commande Windows (plus fiable)
+  findChromeWindows() {
+    try {
+      // Utiliser la commande Windows pour trouver Chrome
+      const result = execSync('where chrome.exe', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      const paths = result.trim().split('\n').filter(p => p.trim());
+      if (paths.length > 0) {
+        const chromePath = paths[0].trim();
+        const fs = require('fs');
+        if (fs.existsSync(chromePath)) {
+          return chromePath;
+        }
+      }
+    } catch (error) {
+      // La commande 'where' peut échouer si Chrome n'est pas dans le PATH
+      // C'est normal, on continue avec les autres méthodes
+    }
+    return null;
   }
 
   // Vérifier si la page est encore attachée et utilisable
@@ -62,44 +83,61 @@ class LeboncoinService {
       };
       
       // Essayer de trouver Chrome/Chromium automatiquement
-      try {
-        // Méthode 1 : Utiliser le Chrome de Puppeteer (si installé)
-        const executablePath = puppeteer.executablePath();
-        if (executablePath) {
-          console.log('✅ Chrome trouvé via Puppeteer:', executablePath);
-          launchOptions.executablePath = executablePath;
-        }
-      } catch (error) {
-        console.log('⚠️  Chrome Puppeteer non trouvé, recherche d\'un Chrome système...');
-        
-        // Méthode 2 : Chercher Chrome dans les emplacements Windows courants
-        const fs = require('fs');
-        const path = require('path');
-        
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Méthode 1 : Utiliser la commande Windows 'where' (le plus fiable)
+      console.log('🔍 Recherche de Chrome système...');
+      let chromePath = this.findChromeWindows();
+      if (chromePath) {
+        console.log('✅ Chrome trouvé via commande Windows:', chromePath);
+        launchOptions.executablePath = chromePath;
+      } else {
+        // Méthode 2 : Chercher Chrome dans les emplacements standards
         const possibleChromePaths = [
-          // Chrome système (Program Files)
-          'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-          'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-          // Chrome utilisateur
-          path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
-          // Edge (compatible avec Puppeteer)
+        // Chrome utilisateur (le plus courant)
+        path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
+        // Chrome système (Program Files)
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+          // Chrome dans d'autres emplacements possibles
+          path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Google\\Chrome\\Application\\chrome.exe'),
+          path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Google\\Chrome\\Application\\chrome.exe'),
+          // Edge (compatible avec Puppeteer en fallback)
           'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
           'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
         ];
         
-        for (const chromePath of possibleChromePaths) {
-          if (chromePath && fs.existsSync(chromePath)) {
-            console.log('✅ Chrome système trouvé:', chromePath);
-            launchOptions.executablePath = chromePath;
+        let chromeFound = false;
+        for (const testPath of possibleChromePaths) {
+          if (testPath && fs.existsSync(testPath)) {
+            console.log('✅ Chrome système trouvé:', testPath);
+            launchOptions.executablePath = testPath;
+            chromeFound = true;
             break;
           }
         }
         
-        // Si aucun Chrome n'est trouvé, lancer sans executablePath
+        // Méthode 3 : Utiliser le Chrome de Puppeteer (si Chrome système non trouvé)
+        if (!chromeFound) {
+          try {
+            const executablePath = puppeteer.executablePath();
+            if (executablePath && fs.existsSync(executablePath)) {
+              console.log('✅ Chrome trouvé via Puppeteer:', executablePath);
+              launchOptions.executablePath = executablePath;
+              chromeFound = true;
+            }
+          } catch (error) {
+            console.log('⚠️  Chrome Puppeteer non disponible');
+          }
+        }
+        
+        // Si aucun Chrome n'est trouvé, essayer sans executablePath
         // Puppeteer essaiera de télécharger Chrome automatiquement
-        if (!launchOptions.executablePath) {
-          console.log('⚠️  Aucun Chrome trouvé. Puppeteer va essayer de télécharger Chrome automatiquement...');
-          console.log('💡 Si cela échoue, installez Chrome manuellement ou exécutez: npx puppeteer browsers install chrome');
+        if (!chromeFound) {
+          console.log('⚠️  Aucun Chrome trouvé dans les emplacements standards.');
+          console.log('💡 Puppeteer va essayer de télécharger Chrome automatiquement...');
+          console.log('💡 Si cela échoue, assurez-vous que Chrome est installé ou exécutez: npx puppeteer browsers install chrome');
         }
       }
       
