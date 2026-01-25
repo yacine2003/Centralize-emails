@@ -1,6 +1,13 @@
 # ============================================
 # Script d'Installation de Chrome pour Puppeteer
 # ============================================
+# 
+# INSTRUCTIONS D'UTILISATION :
+# Si vous avez une erreur "script non signé", utilisez plutôt install-chrome.bat
+# OU exécutez cette commande dans PowerShell (en tant qu'administrateur) :
+#   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+# OU exécutez directement :
+#   powershell.exe -ExecutionPolicy Bypass -File install-chrome.ps1
 
 Write-Host "================================================" -ForegroundColor Green
 Write-Host "  INSTALLATION DE CHROME POUR PUPPETEER" -ForegroundColor Green
