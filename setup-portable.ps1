@@ -74,7 +74,7 @@ Write-Host "  -> Application copiee!" -ForegroundColor Green
 
 # Etape 4 : Installer les dependances
 Write-Host ""
-Write-Host "[4/5] Installation des dependances Node.js..." -ForegroundColor Cyan
+Write-Host "[4/6] Installation des dependances Node.js..." -ForegroundColor Cyan
 Write-Host "  (Cela peut prendre quelques minutes...)" -ForegroundColor Yellow
 Write-Host ""
 
@@ -93,9 +93,31 @@ try {
 
 Set-Location ".."
 
-# Etape 5 : Copier les fichiers necessaires
+# Etape 4.5 : Installer Chrome pour Puppeteer
 Write-Host ""
-Write-Host "[5/5] Copie des fichiers de configuration..." -ForegroundColor Cyan
+Write-Host "[5/6] Installation de Chrome pour Puppeteer..." -ForegroundColor Cyan
+Write-Host "  (Cela peut prendre quelques minutes, Chrome est volumineux...)" -ForegroundColor Yellow
+Write-Host ""
+
+$env:PATH = "$PWD\$nodeFolder;$env:PATH"
+Set-Location "app"
+
+try {
+    Write-Host "  -> Telechargement de Chrome via Puppeteer..." -ForegroundColor Yellow
+    & "..\$nodeFolder\npx.cmd" puppeteer browsers install chrome --no-progress
+    Write-Host ""
+    Write-Host "  -> Chrome installe pour Puppeteer!" -ForegroundColor Green
+} catch {
+    Write-Host "  -> ATTENTION: Installation de Chrome a echoue: $_" -ForegroundColor Yellow
+    Write-Host "  -> L'application utilisera Chrome systeme si disponible" -ForegroundColor Yellow
+    Write-Host "  -> Sinon, installez Chrome manuellement depuis https://www.google.com/chrome/" -ForegroundColor Yellow
+}
+
+Set-Location ".."
+
+# Etape 6 : Copier les fichiers necessaires
+Write-Host ""
+Write-Host "[6/6] Copie des fichiers de configuration..." -ForegroundColor Cyan
 
 if (Test-Path "backend\service_account.json") {
     Copy-Item "backend\service_account.json" "app\" -Force

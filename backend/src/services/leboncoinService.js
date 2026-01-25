@@ -44,7 +44,9 @@ class LeboncoinService {
   async initBrowser() {
     if (!this.browser) {
       console.log('🌐 Démarrage du navigateur...');
-      this.browser = await puppeteer.launch({
+      
+      // Configuration par défaut
+      const launchOptions = {
         headless: false,
         args: [
           '--no-sandbox',
@@ -57,8 +59,66 @@ class LeboncoinService {
           width: 1280,
           height: 800
         }
-      });
-      console.log('✅ Navigateur démarré');
+      };
+      
+      // Essayer de trouver Chrome/Chromium automatiquement
+      try {
+        // Méthode 1 : Utiliser le Chrome de Puppeteer (si installé)
+        const executablePath = puppeteer.executablePath();
+        if (executablePath) {
+          console.log('✅ Chrome trouvé via Puppeteer:', executablePath);
+          launchOptions.executablePath = executablePath;
+        }
+      } catch (error) {
+        console.log('⚠️  Chrome Puppeteer non trouvé, recherche d\'un Chrome système...');
+        
+        // Méthode 2 : Chercher Chrome dans les emplacements Windows courants
+        const fs = require('fs');
+        const path = require('path');
+        
+        const possibleChromePaths = [
+          // Chrome système (Program Files)
+          'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+          'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+          // Chrome utilisateur
+          path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
+          // Edge (compatible avec Puppeteer)
+          'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+          'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+        ];
+        
+        for (const chromePath of possibleChromePaths) {
+          if (chromePath && fs.existsSync(chromePath)) {
+            console.log('✅ Chrome système trouvé:', chromePath);
+            launchOptions.executablePath = chromePath;
+            break;
+          }
+        }
+        
+        // Si aucun Chrome n'est trouvé, lancer sans executablePath
+        // Puppeteer essaiera de télécharger Chrome automatiquement
+        if (!launchOptions.executablePath) {
+          console.log('⚠️  Aucun Chrome trouvé. Puppeteer va essayer de télécharger Chrome automatiquement...');
+          console.log('💡 Si cela échoue, installez Chrome manuellement ou exécutez: npx puppeteer browsers install chrome');
+        }
+      }
+      
+      try {
+        this.browser = await puppeteer.launch(launchOptions);
+        console.log('✅ Navigateur démarré');
+      } catch (error) {
+        console.error('❌ Erreur lors du démarrage du navigateur:', error.message);
+        
+        // Message d'erreur plus clair pour l'utilisateur
+        if (error.message.includes('Could not find Chrome')) {
+          throw new Error(
+            'Chrome n\'a pas été trouvé. Veuillez installer Chrome manuellement ou exécuter dans le dossier app:\n' +
+            '  npx puppeteer browsers install chrome\n\n' +
+            'Ou installez Google Chrome depuis: https://www.google.com/chrome/'
+          );
+        }
+        throw error;
+      }
     }
     return this.browser;
   }

@@ -10,6 +10,7 @@ emails Leboncoin depuis plusieurs comptes Gmail.
 ───────────────────────────────────────────────────────────
 
 ✓ LBC-Automation.bat          → Fichier principal pour lancer
+✓ install-chrome.ps1          → Script pour installer Chrome (si erreur)
 ✓ node-portable/               → Node.js embarque (ne pas toucher)
 ✓ app/                         → Code de l'application (ne pas toucher)
 ✓ INSTRUCTIONS_PORTABLE.txt    → Ce fichier
@@ -89,6 +90,20 @@ Solution :
 → Verifiez votre connexion internet
 → Verifiez que le Google Sheet "LBC-Automation" est accessible
 → Verifiez les identifiants dans le Sheet
+
+PROBLEME 6 : Erreur "Could not find Chrome"
+------------------------------------------
+Cause : Chrome n'est pas installe pour Puppeteer
+Solution :
+→ Clic droit sur "install-chrome.ps1"
+→ "Executer avec PowerShell"
+→ Attendez la fin de l'installation (peut prendre 5-10 minutes)
+→ Relancez LBC-Automation.bat
+
+OU ALTERNATIVE :
+→ Installez Google Chrome manuellement depuis :
+  https://www.google.com/chrome/
+→ L'application utilisera Chrome systeme automatiquement
 
 ───────────────────────────────────────────────────────────
 💡 CONSEILS D'UTILISATION
