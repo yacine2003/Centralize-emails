@@ -4,9 +4,18 @@ const { spawn } = require('child_process');
 
 let mainWindow;
 let serverProcess;
+let serverErrors = [];
+let serverReady = false;
 
 // Afficher une page d'erreur
-function showErrorPage(message) {
+function showErrorPage(message, errors = []) {
+  const errorsHTML = errors.length > 0 
+    ? `<div style="margin-top: 20px; padding: 15px; background: rgba(255, 0, 0, 0.2); border-radius: 8px; text-align: left;">
+         <strong>Erreurs du serveur :</strong><br>
+         <pre style="white-space: pre-wrap; font-size: 0.85rem;">${errors.join('\n')}</pre>
+       </div>`
+    : '';
+    
   const errorHTML = `
     <!DOCTYPE html>
     <html>
@@ -29,7 +38,9 @@ function showErrorPage(message) {
           padding: 40px;
           background: rgba(255, 255, 255, 0.1);
           border-radius: 15px;
-          max-width: 600px;
+          max-width: 800px;
+          max-height: 90vh;
+          overflow-y: auto;
         }
         h1 { font-size: 2.5rem; margin-bottom: 20px; }
         p { font-size: 1.2rem; line-height: 1.6; }
@@ -42,16 +53,25 @@ function showErrorPage(message) {
           font-size: 0.9rem;
           text-align: left;
         }
+        pre {
+          margin: 10px 0;
+          padding: 10px;
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 5px;
+          overflow-x: auto;
+        }
       </style>
     </head>
     <body>
       <div class="error-container">
         <h1>⚠️ Erreur</h1>
         <p>${message}</p>
+        ${errorsHTML}
         <div class="details">
           <strong>Détails techniques :</strong><br>
-          - Vérifiez la console pour plus d'informations<br>
+          - Vérifiez la console Electron pour plus d'informations<br>
           - Assurez-vous que le port 3001 n'est pas déjà utilisé<br>
+          - Vérifiez que le dossier public existe dans le package<br>
           - Redémarrez l'application
         </div>
       </div>
@@ -108,13 +128,19 @@ function createWindow() {
     });
     
     testReq.on('error', () => {
-      showErrorPage('Impossible de se connecter au serveur. Vérifiez la console pour plus de détails.');
+      const errorMessage = serverErrors.length > 0
+        ? `Impossible de se connecter au serveur.\n\nErreurs détectées:\n${serverErrors.slice(-5).join('\n')}`
+        : 'Impossible de se connecter au serveur. Le serveur ne semble pas avoir démarré.';
+      showErrorPage(errorMessage, serverErrors);
       mainWindow.show();
     });
     
     testReq.setTimeout(2000, () => {
       testReq.destroy();
-      showErrorPage('Timeout lors de la connexion au serveur.');
+      const errorMessage = serverErrors.length > 0
+        ? `Timeout lors de la connexion au serveur.\n\nErreurs détectées:\n${serverErrors.slice(-5).join('\n')}`
+        : 'Timeout lors de la connexion au serveur. Le serveur n\'a pas répondu à temps.';
+      showErrorPage(errorMessage, serverErrors);
       mainWindow.show();
     });
   }, 15000);
@@ -161,35 +187,79 @@ function startServer() {
     }
   }
   
+  // Dans Electron packagé, utiliser ELECTRON_RUN_AS_NODE pour lancer Node.js
+  // Mais d'abord, vérifier si on est dans app.asar
+  const isAsar = appPath.includes('.asar');
+  console.log('📦 Application packagée (asar):', isAsar);
+  
   // Utiliser Node.js embarqué d'Electron
-  serverProcess = spawn(process.execPath, [serverPath], {
+  const nodeEnv = {
+    ...process.env,
+    PORT: '3001',
+    NODE_ENV: 'production',
+    ELECTRON_RUN_AS_NODE: '1'
+  };
+  
+  // Si on est dans asar, les fichiers peuvent être extraits dans app.asar.unpacked
+  let finalServerPath = serverPath;
+  if (isAsar) {
+    // Essayer le chemin unpacked d'abord
+    const unpackedPath = serverPath.replace('.asar', '.asar.unpacked');
+    if (fs.existsSync(unpackedPath)) {
+      finalServerPath = unpackedPath;
+      console.log('✅ Utilisation du chemin unpacked:', finalServerPath);
+    } else {
+      console.log('⚠️  Application dans app.asar, utilisation du chemin asar');
+    }
+  }
+  
+  console.log('🚀 Lancement du serveur avec:', process.execPath);
+  console.log('📄 Fichier serveur:', finalServerPath);
+  console.log('📁 Répertoire de travail:', appPath);
+  
+  serverProcess = spawn(process.execPath, [finalServerPath], {
     cwd: appPath,
-    env: {
-      ...process.env,
-      PORT: '3001',
-      NODE_ENV: 'production',
-      ELECTRON_RUN_AS_NODE: '1'
-    },
-    stdio: ['ignore', 'pipe', 'pipe'] // Capturer stdout et stderr
+    env: nodeEnv,
+    stdio: ['ignore', 'pipe', 'pipe'], // Capturer stdout et stderr
+    shell: false
   });
 
   // Logger la sortie du serveur
   serverProcess.stdout.on('data', (data) => {
-    console.log(`[Serveur] ${data.toString()}`);
+    const output = data.toString();
+    console.log(`[Serveur] ${output}`);
+    
+    // Détecter si le serveur démarre correctement
+    if (output.includes('Serveur Centralize-Emails démarré') || output.includes('localhost:3001')) {
+      serverReady = true;
+      console.log('✅ Serveur démarré avec succès !');
+    }
   });
 
   serverProcess.stderr.on('data', (data) => {
-    console.error(`[Serveur Error] ${data.toString()}`);
+    const error = data.toString();
+    console.error(`[Serveur Error] ${error}`);
+    serverErrors.push(error);
+    
+    // Limiter à 10 erreurs pour éviter de surcharger
+    if (serverErrors.length > 10) {
+      serverErrors.shift();
+    }
   });
 
   serverProcess.on('error', (err) => {
-    console.error('❌ Erreur lors du démarrage du serveur:', err);
+    const errorMsg = `Erreur lors du démarrage du serveur: ${err.message}`;
+    console.error('❌', errorMsg);
+    serverErrors.push(errorMsg);
   });
 
   serverProcess.on('exit', (code, signal) => {
     console.log(`Serveur arrêté avec le code ${code}, signal ${signal}`);
     if (code !== 0 && code !== null) {
-      console.error('❌ Le serveur s\'est arrêté avec une erreur !');
+      const errorMsg = `Le serveur s'est arrêté avec une erreur (code: ${code})`;
+      console.error('❌', errorMsg);
+      serverErrors.push(errorMsg);
+      serverReady = false;
     }
   });
 }
