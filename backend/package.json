@@ -2,12 +2,15 @@
   "name": "centralize-emails-backend",
   "version": "1.0.0",
   "description": "Backend pour centraliser les emails Leboncoin depuis Google Sheets",
-  "main": "src/server.js",
-  "bin": "src/server.js",
+  "main": "electron-main.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "build": "npx pkg . --targets node18-win-x64 --output dist/LBC-Automation.exe"
+    "electron": "electron .",
+    "electron-dev": "cross-env NODE_ENV=development electron .",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "build-pkg": "npx pkg . --targets node18-win-x64 --output dist/LBC-Automation.exe"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -21,7 +24,10 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
-    "pkg": "^5.8.1"
+    "pkg": "^5.8.1",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "cross-env": "^7.0.3"
   },
   "pkg": {
     "assets": [
@@ -34,5 +40,42 @@
       "node18-win-x64"
     ],
     "outputPath": "dist"
+  },
+  "build": {
+    "appId": "com.lbc.automation",
+    "productName": "LBC Automation",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron-main.js",
+      "src/**/*",
+      "public/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "LBC Automation"
+    },
+    "extraResources": [
+      {
+        "from": "service_account.json",
+        "to": "service_account.json",
+        "filter": ["**/*"]
+      }
+    ]
   }
 }

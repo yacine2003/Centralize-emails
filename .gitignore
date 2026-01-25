@@ -9,6 +9,7 @@ frontend/build/
 backend/.browser-data/
 backend/public/
 backend/dist/
+backend/dist-electron/
 node-portable/
 app/
 node-portable.zip

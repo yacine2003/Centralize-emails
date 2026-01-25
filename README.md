@@ -223,14 +223,49 @@ Le dossier `LBC-Automation/` est prêt à être compressé et livré !
 
 ---
 
-### ⚠️ Alternative : Version .exe (Non Recommandée - Problèmes de Compatibilité)
+### 🎯 Alternative : Version .exe avec Electron (Recommandée pour un Vrai .exe)
+
+**✅ Vrai .exe Windows** - **✅ Installeur professionnel** - **✅ Fonctionne avec toutes les bibliothèques**
+
+Cette méthode utilise Electron pour créer un vrai fichier `.exe` Windows avec installeur.  
+**Beaucoup plus fiable que `pkg`** car Electron gère parfaitement les bibliothèques modernes.
+
+**📚 [Guide Complet - Version Electron](./BUILD_ELECTRON.md)**
+
+**Préparation rapide (Windows) :**
+
+```cmd
+# 1. Builder le frontend
+cd frontend
+npm install
+npm run build
+cd ..
+
+# 2. Copier vers backend
+mkdir backend\public
+xcopy /E /Y frontend\build\* backend\public\
+
+# 3. Installer Electron
+cd backend
+npm install
+
+# 4. Tester en dev
+npm run electron-dev
+
+# 5. Créer le .exe
+npm run build-win
+```
+
+Le fichier `.exe` sera créé dans `backend/dist-electron/`
+
+---
+
+### ⚠️ Ancienne Méthode : Version .exe avec pkg (Non Recommandée)
 
 La création d'un `.exe` avec `pkg` pose des problèmes avec les bibliothèques Google modernes.  
-**Utilisez la version portable ci-dessus pour une fiabilité maximale.**
+**Utilisez Electron (ci-dessus) ou la version portable pour une fiabilité maximale.**
 
-Si vous souhaitez quand même essayer :
-
-**📚 [Guide Build .exe](./BUILD.md)** (peut ne pas fonctionner avec Google Sheets)
+**📚 [Guide Build .exe avec pkg](./BUILD.md)** (peut ne pas fonctionner avec Google Sheets)
 
 ## 🐛 Dépannage
 
