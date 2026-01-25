@@ -7,12 +7,46 @@ const emailRoutes = require('./routes/emails');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Variable globale pour le chemin public
+let publicPath;
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Servir les fichiers statiques du frontend (dossier public)
-app.use(express.static(path.join(__dirname, '../public')));
+// Gérer les chemins dans l'environnement Electron packagé
+let publicPath;
+if (process.env.ELECTRON_RUN_AS_NODE || process.resourcesPath) {
+  // Environnement Electron packagé
+  const fs = require('fs');
+  // Essayer plusieurs chemins possibles
+  const possiblePaths = [
+    path.join(__dirname, '../public'),
+    path.join(process.resourcesPath, 'app', 'public'),
+    path.join(process.resourcesPath, 'app.asar.unpacked', 'public'),
+    path.join(__dirname, '..', '..', 'public')
+  ];
+  
+  for (const testPath of possiblePaths) {
+    if (fs.existsSync(testPath)) {
+      publicPath = testPath;
+      console.log(`✅ Dossier public trouvé: ${publicPath}`);
+      break;
+    }
+  }
+  
+  if (!publicPath) {
+    console.error('❌ Dossier public non trouvé. Chemins testés:', possiblePaths);
+    publicPath = path.join(__dirname, '../public'); // Fallback
+  }
+} else {
+  // Environnement normal (dev ou Node.js standard)
+  publicPath = path.join(__dirname, '../public');
+}
+
+console.log(`📁 Chemin public utilisé: ${publicPath}`);
+app.use(express.static(publicPath));
 
 // Logger middleware
 app.use((req, res, next) => {
@@ -34,7 +68,7 @@ app.get('*', (req, res) => {
   }
   
   // Sinon on sert le frontend
-  const indexPath = path.join(__dirname, '../public', 'index.html');
+  const indexPath = path.join(publicPath || path.join(__dirname, '../public'), 'index.html');
   res.sendFile(indexPath, (err) => {
     if (err) {
       // Si le frontend n'est pas encore buildé, on affiche un message d'aide
