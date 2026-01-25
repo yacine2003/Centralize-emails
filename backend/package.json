@@ -61,7 +61,9 @@
           "arch": ["x64"]
         }
       ],
-      "icon": "assets/icon.ico"
+      "icon": "assets/icon.ico",
+      "sign": false,
+      "signingHashAlgorithms": []
     },
     "nsis": {
       "oneClick": false,
