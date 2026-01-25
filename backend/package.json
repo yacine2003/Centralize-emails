@@ -50,6 +50,7 @@
     },
     "files": [
       "electron-main.js",
+      "start-server.js",
       "src/**/*",
       "public/**/*",
       "node_modules/**/*",
@@ -57,7 +58,8 @@
     ],
     "asarUnpack": [
       "src/**/*",
-      "public/**/*"
+      "public/**/*",
+      "start-server.js"
     ],
     "win": {
       "target": [

@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
-const { spawn } = require('child_process');
+const { fork } = require('child_process');
 
 let mainWindow;
 let serverProcess;
@@ -167,7 +167,8 @@ function startServer() {
   // Dans Electron packagé, __dirname pointe vers resources/app.asar ou resources/app
   // Il faut utiliser app.getAppPath() pour obtenir le bon chemin
   const appPath = app.getAppPath();
-  const serverPath = path.join(appPath, 'src', 'server.js');
+  // Utiliser le script wrapper qui sera extrait de asar
+  const serverPath = path.join(appPath, 'start-server.js');
   
   console.log('📁 Chemin de l\'application:', appPath);
   console.log('📁 Chemin du serveur:', serverPath);
@@ -200,29 +201,51 @@ function startServer() {
     ELECTRON_RUN_AS_NODE: '1'
   };
   
-  // Si on est dans asar, les fichiers peuvent être extraits dans app.asar.unpacked
+  // Si on est dans asar, les fichiers sont extraits dans app.asar.unpacked
   let finalServerPath = serverPath;
   if (isAsar) {
-    // Essayer le chemin unpacked d'abord
+    // Le fichier start-server.js sera dans app.asar.unpacked
     const unpackedPath = serverPath.replace('.asar', '.asar.unpacked');
     if (fs.existsSync(unpackedPath)) {
       finalServerPath = unpackedPath;
       console.log('✅ Utilisation du chemin unpacked:', finalServerPath);
+    } else if (fs.existsSync(serverPath)) {
+      // Essayer le chemin asar normal (peut fonctionner pour les fichiers extraits)
+      console.log('⚠️  Utilisation du chemin asar (fichier peut être accessible)');
     } else {
-      console.log('⚠️  Application dans app.asar, utilisation du chemin asar');
+      console.error('❌ Fichier start-server.js non trouvé ni dans asar ni dans unpacked');
+      serverErrors.push(`Fichier start-server.js non trouvé. Chemins testés: ${serverPath}, ${unpackedPath}`);
     }
   }
   
-  console.log('🚀 Lancement du serveur avec:', process.execPath);
+  console.log('🚀 Lancement du serveur...');
   console.log('📄 Fichier serveur:', finalServerPath);
   console.log('📁 Répertoire de travail:', appPath);
   
-  serverProcess = spawn(process.execPath, [finalServerPath], {
-    cwd: appPath,
-    env: nodeEnv,
-    stdio: ['ignore', 'pipe', 'pipe'], // Capturer stdout et stderr
-    shell: false
-  });
+  // Vérifier que le fichier existe avant de lancer
+  if (!fs.existsSync(finalServerPath)) {
+    const errorMsg = `Fichier serveur non trouvé: ${finalServerPath}`;
+    console.error('❌', errorMsg);
+    serverErrors.push(errorMsg);
+    return;
+  }
+  
+  try {
+    // Utiliser fork() - fonctionne mieux avec Electron que spawn()
+    // fork() crée un nouveau processus Node.js en utilisant le runtime d'Electron
+    serverProcess = fork(finalServerPath, [], {
+      cwd: appPath,
+      env: nodeEnv,
+      silent: false, // Afficher stdout et stderr dans la console
+      stdio: ['ignore', 'pipe', 'pipe', 'ipc'] // IPC pour la communication
+    });
+    
+    console.log('✅ Processus serveur créé avec PID:', serverProcess.pid);
+  } catch (error) {
+    const errorMsg = `Erreur lors de la création du processus: ${error.message}`;
+    console.error('❌', errorMsg);
+    serverErrors.push(errorMsg);
+  }
 
   // Logger la sortie du serveur
   serverProcess.stdout.on('data', (data) => {
