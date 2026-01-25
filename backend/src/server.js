@@ -16,7 +16,6 @@ app.use(express.json());
 
 // Servir les fichiers statiques du frontend (dossier public)
 // Gérer les chemins dans l'environnement Electron packagé
-let publicPath;
 if (process.env.ELECTRON_RUN_AS_NODE || process.resourcesPath) {
   // Environnement Electron packagé
   const fs = require('fs');
