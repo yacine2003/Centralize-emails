@@ -4,7 +4,7 @@ import './EmailList.css';
 
 const EmailList = () => {
   // ID du Google Sheet codé en dur
-  const SPREADSHEET_ID = '10gWvODEEzozfzh-86lsDeBbF5sKH4WFWzzNcu6UwK7Y';
+  const SPREADSHEET_ID = '1BjyJQakQjODsh6yMsyVnSL6dPYvIoJ5R7RPCshSgJog';
   
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);

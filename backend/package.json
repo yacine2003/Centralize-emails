@@ -2,16 +2,10 @@
   "name": "centralize-emails-backend",
   "version": "1.0.0",
   "description": "Backend pour centraliser les emails Leboncoin depuis Google Sheets",
-  "main": "electron-main.js",
+  "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "electron": "electron .",
-    "electron-dev": "cross-env NODE_ENV=development electron .",
-    "build": "electron-builder",
-    "build-win": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win",
-    "build-win-portable": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win portable --config.win.sign=false",
-    "build-pkg": "npx pkg . --targets node18-win-x64 --output dist/LBC-Automation.exe"
+    "dev": "nodemon src/server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -24,67 +18,6 @@
     "puppeteer": "^24.15.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1",
-    "pkg": "^5.8.1",
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.1",
-    "cross-env": "^7.0.3"
-  },
-  "pkg": {
-    "assets": [
-      "public/**/*",
-      "src/**/*",
-      ".env",
-      "node_modules/**/*"
-    ],
-    "targets": [
-      "node18-win-x64"
-    ],
-    "outputPath": "dist"
-  },
-  "build": {
-    "appId": "com.lbc.automation",
-    "productName": "LBC Automation",
-    "directories": {
-      "output": "dist-electron"
-    },
-    "files": [
-      "electron-main.js",
-      "start-server.js",
-      "src/**/*",
-      "public/**/*",
-      "node_modules/**/*",
-      "package.json"
-    ],
-    "asarUnpack": [
-      "src/**/*",
-      "public/**/*",
-      "start-server.js"
-    ],
-    "win": {
-      "target": [
-        {
-          "target": "portable",
-          "arch": ["x64"]
-        }
-      ],
-      "icon": "assets/icon.ico",
-      "sign": false,
-      "signingHashAlgorithms": []
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "LBC Automation"
-    },
-    "extraResources": [
-      {
-        "from": "service_account.json",
-        "to": "service_account.json",
-        "filter": ["**/*"]
-      }
-    ]
+    "nodemon": "^3.0.1"
   }
 }
