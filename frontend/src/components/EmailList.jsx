@@ -2,23 +2,52 @@ import React, { useState, useCallback, useEffect } from 'react';
 import EmailItem from './EmailItem';
 import './EmailList.css';
 
-const EmailList = () => {
-  // ID du Google Sheet codé en dur
-  const SPREADSHEET_ID = '1BjyJQakQjODsh6yMsyVnSL6dPYvIoJ5R7RPCshSgJog';
-  
+const EmailList = ({ spreadsheetId: propSpreadsheetId }) => {
+  const [spreadsheetId, setSpreadsheetId] = useState(propSpreadsheetId || '');
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterEmail, setFilterEmail] = useState('all');
 
+  // Charger la configuration au démarrage
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/config');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.spreadsheetId) {
+            setSpreadsheetId(data.spreadsheetId);
+          }
+        }
+      } catch (err) {
+        console.error('Erreur chargement config:', err);
+      }
+    };
+    
+    loadConfig();
+  }, []);
+
+  // Mettre à jour le spreadsheetId si la prop change
+  useEffect(() => {
+    if (propSpreadsheetId) {
+      setSpreadsheetId(propSpreadsheetId);
+    }
+  }, [propSpreadsheetId]);
+
   const fetchEmails = useCallback(async () => {
+    if (!spreadsheetId) {
+      setError('Veuillez configurer votre Google Sheet dans la page Configuration');
+      return;
+    }
+
     setLoading(true);
     setError('');
     
     try {
       const response = await fetch(
-        `http://localhost:3001/api/emails/leboncoin?spreadsheetId=${SPREADSHEET_ID}`
+        `http://localhost:3001/api/emails/leboncoin?spreadsheetId=${spreadsheetId}`
       );
       
       if (!response.ok) {
@@ -41,12 +70,14 @@ const EmailList = () => {
     } finally {
       setLoading(false);
     }
-  }, [SPREADSHEET_ID]);
+  }, [spreadsheetId]);
 
-  // Charger automatiquement les emails au démarrage
+  // Charger automatiquement les emails quand le spreadsheetId est disponible
   useEffect(() => {
-    fetchEmails();
-  }, [fetchEmails]);
+    if (spreadsheetId) {
+      fetchEmails();
+    }
+  }, [spreadsheetId, fetchEmails]);
 
   // Extraire les adresses emails uniques
   const uniqueEmails = [...new Set(emails.map(e => e.accountEmail))].sort();
@@ -131,13 +162,18 @@ const EmailList = () => {
       <div className="header">
         <h1>📧 Emails Leboncoin Centralisés</h1>
         <p className="subtitle">Tous vos emails Leboncoin en un seul endroit</p>
+        {spreadsheetId && (
+          <div className="sheet-indicator">
+            📊 Google Sheet configuré : <code>{spreadsheetId.substring(0, 20)}...</code>
+          </div>
+        )}
       </div>
 
       <div className="config-section">
         <div className="action-group">
           <button 
             onClick={fetchEmails} 
-            disabled={loading}
+            disabled={loading || !spreadsheetId}
             className="fetch-button"
           >
             {loading ? (

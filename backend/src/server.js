@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const emailRoutes = require('./routes/emails');
+const configRoutes = require('./routes/config');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -55,6 +56,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api', emailRoutes);
+app.use('/api/config', configRoutes);
 
 // Pour toute autre route, servir l'index.html du frontend (SPA support)
 app.get('*', (req, res) => {
